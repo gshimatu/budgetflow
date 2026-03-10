@@ -30,6 +30,28 @@ class FirestoreService {
         .add(transaction.toMap());
   }
 
+  Future<void> updateTransaction(
+    String uid,
+    String transactionId,
+    TransactionModel transaction,
+  ) async {
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('transactions')
+        .doc(transactionId)
+        .update(transaction.toMap());
+  }
+
+  Future<void> deleteTransaction(String uid, String transactionId) async {
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('transactions')
+        .doc(transactionId)
+        .delete();
+  }
+
   Stream<List<CategoryModel>> watchGlobalCategories() {
     return _db
         .collection('globalCategories')

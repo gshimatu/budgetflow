@@ -10,12 +10,29 @@ class TransactionsScreen extends StatelessWidget {
   const TransactionsScreen({super.key});
 
   Future<void> _openAddTransaction(BuildContext context, String uid) async {
+    await _openTransactionForm(context, uid);
+  }
+
+  Future<void> _openEditTransaction(
+    BuildContext context,
+    String uid,
+    TransactionModel existing,
+  ) async {
+    await _openTransactionForm(context, uid, existing: existing);
+  }
+
+  Future<void> _openTransactionForm(
+    BuildContext context,
+    String uid, {
+    TransactionModel? existing,
+  }) async {
     final formKey = GlobalKey<FormState>();
-    final amountController = TextEditingController();
-    final noteController = TextEditingController();
-    DateTime selectedDate = DateTime.now();
-    String type = 'expense';
-    String? selectedCategory;
+    final amountController =
+        TextEditingController(text: existing?.amount.toString());
+    final noteController = TextEditingController(text: existing?.note ?? '');
+    DateTime selectedDate = existing?.date ?? DateTime.now();
+    String type = existing?.type ?? 'expense';
+    String? selectedCategory = existing?.categoryName;
     String? customCategory;
 
     await showModalBottomSheet(
@@ -56,6 +73,13 @@ class TransactionsScreen extends StatelessWidget {
                           selectedCategory = categoryItems.isNotEmpty
                               ? categoryItems.first
                               : 'Autre';
+                        }
+                        final isCustomCategory = selectedCategory != null &&
+                            !categoryItems.contains(selectedCategory) &&
+                            selectedCategory != 'Autre';
+                        if (isCustomCategory && customCategory == null) {
+                          customCategory = selectedCategory;
+                          selectedCategory = 'Autre';
                         }
                         return Form(
                           key: formKey,
@@ -258,7 +282,7 @@ class TransactionsScreen extends StatelessWidget {
                                         : (selectedCategory ?? '');
                                     final categoryName = chosen.trim();
                                     final transaction = TransactionModel(
-                                      id: '',
+                                      id: existing?.id ?? '',
                                       amount: amount,
                                       type: type,
                                       categoryId:
@@ -267,13 +291,23 @@ class TransactionsScreen extends StatelessWidget {
                                       date: selectedDate,
                                       note: noteController.text.trim(),
                                     );
-                                    await FirestoreService()
-                                        .addTransaction(uid, transaction);
+                                    if (existing == null) {
+                                      await FirestoreService()
+                                          .addTransaction(uid, transaction);
+                                    } else {
+                                      await FirestoreService().updateTransaction(
+                                        uid,
+                                        existing.id,
+                                        transaction,
+                                      );
+                                    }
                                     if (context.mounted) {
                                       Navigator.pop(context);
                                     }
                                   },
-                                  child: const Text('Ajouter'),
+                                  child: Text(
+                                    existing == null ? 'Ajouter' : 'Mettre à jour',
+                                  ),
                                 ),
                               ),
                             ],
@@ -334,7 +368,13 @@ class TransactionsScreen extends StatelessWidget {
             children: [
               _SummaryCard(summary: summary),
               const SizedBox(height: 16),
-              ...transactions.map((tx) => _TransactionTile(tx: tx)),
+              ...transactions.map(
+                (tx) => _TransactionTile(
+                  tx: tx,
+                  onEdit: () => _openEditTransaction(context, user.uid, tx),
+                  onDelete: () => _confirmDelete(context, user.uid, tx),
+                ),
+              ),
             ],
           );
         },
@@ -344,6 +384,39 @@ class TransactionsScreen extends StatelessWidget {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    String uid,
+    TransactionModel tx,
+  ) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Supprimer la transaction'),
+          content: const Text(
+            'Voulez-vous vraiment supprimer cette transaction ?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFEF4444),
+              ),
+              child: const Text('Supprimer'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirm != true) return;
+    await FirestoreService().deleteTransaction(uid, tx.id);
   }
 }
 
@@ -485,9 +558,15 @@ class _MiniStat extends StatelessWidget {
 }
 
 class _TransactionTile extends StatelessWidget {
-  const _TransactionTile({required this.tx});
+  const _TransactionTile({
+    required this.tx,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final TransactionModel tx;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -499,72 +578,87 @@ class _TransactionTile extends StatelessWidget {
         : tx.categoryId;
     final dateLabel = DateFormat('dd MMM yyyy').format(tx.date);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: amountColor.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+    return InkWell(
+      onTap: onEdit,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
             ),
-            child: Icon(
-              isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-              color: amountColor,
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: amountColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                color: amountColor,
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  dateLabel,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black54,
-                      ),
-                ),
-                if (tx.note != null && tx.note!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    tx.note!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.black45,
+                    label,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    dateLabel,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.black54,
+                        ),
+                  ),
+                  if (tx.note != null && tx.note!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      tx.note!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.black45,
+                          ),
+                    ),
+                  ],
                 ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${isIncome ? '+' : '-'} ${_formatMoney(tx.amount)}',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: amountColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 6),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_outline),
+                  color: const Color(0xFFEF4444),
+                ),
               ],
             ),
-          ),
-          Text(
-            '${isIncome ? '+' : '-'} ${_formatMoney(tx.amount)}',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: amountColor,
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
