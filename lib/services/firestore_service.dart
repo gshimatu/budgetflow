@@ -175,6 +175,7 @@ class FirestoreService {
 
     double totalIncome = 0;
     double totalExpense = 0;
+    final Map<String, double> expenseByCategory = {};
     final txSnapshot = await _db.collectionGroup('transactions').get();
     for (final doc in txSnapshot.docs) {
       final data = doc.data();
@@ -185,6 +186,12 @@ class FirestoreService {
         totalIncome += amount;
       } else {
         totalExpense += amount;
+        final category =
+            (data['categoryName'] as String?) ??
+            (data['categoryId'] as String?) ??
+            'Autre';
+        expenseByCategory[category] =
+            (expenseByCategory[category] ?? 0) + amount;
       }
     }
 
@@ -193,6 +200,7 @@ class FirestoreService {
       'transactions': transactionsCount.count,
       'totalIncome': totalIncome,
       'totalExpense': totalExpense,
+      'expenseByCategory': expenseByCategory,
     };
   }
 

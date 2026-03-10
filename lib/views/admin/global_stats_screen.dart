@@ -16,15 +16,40 @@ class GlobalStatsScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Erreur de chargement des statistiques.\n'
+                  'Verifie le role admin et les regles publiees.\n'
+                  'Details: ${snapshot.error}',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
           final data = snapshot.data ?? {};
           final users = data['users'] as int? ?? 0;
           final transactions = data['transactions'] as int? ?? 0;
-          final totalIncome = data['totalIncome'] as double? ?? 0;
-          final totalExpense = data['totalExpense'] as double? ?? 0;
-
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              if (users == 0 && transactions == 0)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Aucune donnee detectee. Verifie le role admin, '
+                    'les regles publiees et le projet Firebase utilise.',
+                  ),
+                ),
               _StatCard(
                 title: 'Utilisateurs',
                 value: users.toString(),
@@ -37,20 +62,6 @@ class GlobalStatsScreen extends StatelessWidget {
                 value: transactions.toString(),
                 icon: Icons.swap_horiz,
                 color: const Color(0xFF6366F1),
-              ),
-              const SizedBox(height: 12),
-              _StatCard(
-                title: 'Revenus totaux',
-                value: _formatMoney(totalIncome),
-                icon: Icons.trending_up,
-                color: const Color(0xFF16A34A),
-              ),
-              const SizedBox(height: 12),
-              _StatCard(
-                title: 'Dépenses totales',
-                value: _formatMoney(totalExpense),
-                icon: Icons.trending_down,
-                color: const Color(0xFFEF4444),
               ),
             ],
           );
