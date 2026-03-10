@@ -8,6 +8,213 @@ import '../../services/firestore_service.dart';
 class TransactionsScreen extends StatelessWidget {
   const TransactionsScreen({super.key});
 
+  Future<void> _openAddTransaction(BuildContext context, String uid) async {
+    final formKey = GlobalKey<FormState>();
+    final amountController = TextEditingController();
+    final categoryController = TextEditingController();
+    final noteController = TextEditingController();
+    DateTime selectedDate = DateTime.now();
+    String type = 'expense';
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Nouvelle transaction',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: amountController,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Montant',
+                          prefixIcon: const Icon(Icons.attach_money),
+                          filled: true,
+                          fillColor: const Color(0xFFF2F6FA),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Veuillez saisir un montant';
+                          }
+                          final parsed = double.tryParse(
+                            value.replaceAll(',', '.'),
+                          );
+                          if (parsed == null || parsed <= 0) {
+                            return 'Montant invalide';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: type,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'expense',
+                            child: Text('Dépense'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'income',
+                            child: Text('Revenu'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setState(() => type = value);
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Type',
+                          filled: true,
+                          fillColor: const Color(0xFFF2F6FA),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: categoryController,
+                        decoration: InputDecoration(
+                          labelText: 'Catégorie',
+                          prefixIcon: const Icon(Icons.category_outlined),
+                          filled: true,
+                          fillColor: const Color(0xFFF2F6FA),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Veuillez saisir une catégorie';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: noteController,
+                        decoration: InputDecoration(
+                          labelText: 'Note (optionnel)',
+                          prefixIcon: const Icon(Icons.note_outlined),
+                          filled: true,
+                          fillColor: const Color(0xFFF2F6FA),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Date: ${DateFormat('dd MMM yyyy').format(selectedDate)}',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2100),
+                                initialDate: selectedDate,
+                              );
+                              if (picked != null) {
+                                setState(() => selectedDate = picked);
+                              }
+                            },
+                            child: const Text('Choisir'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: () async {
+                            if (!formKey.currentState!.validate()) {
+                              return;
+                            }
+                            final amount = double.parse(
+                              amountController.text
+                                  .trim()
+                                  .replaceAll(',', '.'),
+                            );
+                            final categoryName =
+                                categoryController.text.trim();
+                            final transaction = TransactionModel(
+                              id: '',
+                              amount: amount,
+                              type: type,
+                              categoryId: categoryName.toLowerCase(),
+                              categoryName: categoryName,
+                              date: selectedDate,
+                              note: noteController.text.trim(),
+                            );
+                            await FirestoreService()
+                                .addTransaction(uid, transaction);
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          child: const Text('Ajouter'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -57,7 +264,7 @@ class TransactionsScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => _openAddTransaction(context, user.uid),
         child: const Icon(Icons.add),
       ),
     );

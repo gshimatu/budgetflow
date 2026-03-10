@@ -20,4 +20,12 @@ class FirestoreService {
               .toList(),
         );
   }
+
+  Future<void> addTransaction(String uid, TransactionModel transaction) async {
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('transactions')
+        .add(transaction.toMap());
+  }
 }
