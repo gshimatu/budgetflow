@@ -1,7 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../../models/transaction_model.dart';
 import '../../routes/app_routes.dart';
+import '../../services/firestore_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -144,6 +147,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     const brandGreen = Color(0xFF33CC33);
     const brandCyan = Color(0xFF0BC1DE);
 
+    if (user == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Profil')),
+        body: const Center(child: Text('Connectez-vous pour voir votre profil.')),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC),
       body: SafeArea(
@@ -174,11 +184,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     CircleAvatar(
                       radius: 32,
                       backgroundColor: Colors.white,
-                      backgroundImage: user?.photoURL == null
+                      backgroundImage: user.photoURL == null
                           ? const AssetImage(
                               'assets/images/logo-budgetflow.png',
                             )
-                          : NetworkImage(user!.photoURL!) as ImageProvider,
+                          : NetworkImage(user.photoURL!) as ImageProvider,
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -186,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user?.displayName ?? 'Utilisateur BudgetFlow',
+                            user.displayName ?? 'Utilisateur BudgetFlow',
                             style: Theme.of(context)
                                 .textTheme
                                 .titleLarge
@@ -197,7 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            user?.email ?? 'email@exemple.com',
+                            user.email ?? 'email@exemple.com',
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
@@ -300,8 +310,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 20),
               _SectionTitle(title: 'Préférences'),
               const SizedBox(height: 12),
-              _PreferencesCard(),
+              StreamBuilder<Map<String, dynamic>>(
+                stream: FirestoreService().watchUserProfile(user.uid),
+                builder: (context, snapshot) {
+                  final data = snapshot.data ?? {};
+                  final prefs =
+                      (data['preferences'] as Map?)?.cast<String, dynamic>() ??
+                          {};
+                  final notifications = prefs['notifications'] as bool? ?? true;
+                  final weeklyReport = prefs['weeklyReport'] as bool? ?? false;
+                  return _PreferencesCard(
+                    notifications: notifications,
+                    weeklyReport: weeklyReport,
+                    onToggleNotifications: (value) {
+                      FirestoreService().updateUserPreferences(
+                        user.uid,
+                        notifications: value,
+                      );
+                    },
+                    onToggleWeeklyReport: (value) {
+                      FirestoreService().updateUserPreferences(
+                        user.uid,
+                        weeklyReport: value,
+                      );
+                    },
+                  );
+                },
+              ),
               const SizedBox(height: 20),
+              StreamBuilder<Map<String, dynamic>>(
+                stream: FirestoreService().watchUserProfile(user.uid),
+                builder: (context, snapshot) {
+                  final data = snapshot.data ?? {};
+                  final prefs =
+                      (data['preferences'] as Map?)?.cast<String, dynamic>() ??
+                          {};
+                  final weeklyReport = prefs['weeklyReport'] as bool? ?? false;
+                  if (!weeklyReport) {
+                    return const SizedBox.shrink();
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SectionTitle(title: 'Résumé hebdomadaire'),
+                      const SizedBox(height: 12),
+                      _WeeklyReportCard(uid: user.uid),
+                      const SizedBox(height: 20),
+                    ],
+                  );
+                },
+              ),
               _SectionTitle(title: 'Sécurité'),
               const SizedBox(height: 12),
               Container(
@@ -364,14 +422,23 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _PreferencesCard extends StatefulWidget {
+  const _PreferencesCard({
+    required this.notifications,
+    required this.weeklyReport,
+    required this.onToggleNotifications,
+    required this.onToggleWeeklyReport,
+  });
+
+  final bool notifications;
+  final bool weeklyReport;
+  final ValueChanged<bool> onToggleNotifications;
+  final ValueChanged<bool> onToggleWeeklyReport;
+
   @override
   State<_PreferencesCard> createState() => _PreferencesCardState();
 }
 
 class _PreferencesCardState extends State<_PreferencesCard> {
-  bool _notifications = true;
-  bool _weeklyReport = false;
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -393,16 +460,16 @@ class _PreferencesCardState extends State<_PreferencesCard> {
             contentPadding: EdgeInsets.zero,
             title: const Text('Notifications'),
             subtitle: const Text('Alertes sur vos dépenses'),
-            value: _notifications,
-            onChanged: (value) => setState(() => _notifications = value),
+            value: widget.notifications,
+            onChanged: widget.onToggleNotifications,
           ),
           const Divider(height: 1),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Rapport hebdo'),
             subtitle: const Text('Résumé chaque lundi'),
-            value: _weeklyReport,
-            onChanged: (value) => setState(() => _weeklyReport = value),
+            value: widget.weeklyReport,
+            onChanged: widget.onToggleWeeklyReport,
           ),
           const Divider(height: 1),
           ListTile(
@@ -417,4 +484,141 @@ class _PreferencesCardState extends State<_PreferencesCard> {
       ),
     );
   }
+}
+
+class _WeeklyReportCard extends StatelessWidget {
+  const _WeeklyReportCard({required this.uid});
+
+  final String uid;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: StreamBuilder<List<TransactionModel>>(
+        stream: FirestoreService().watchTransactions(uid),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final items = snapshot.data ?? [];
+          final end = DateTime.now();
+          final start = end.subtract(const Duration(days: 7));
+          final weekly = items
+              .where((tx) => tx.date.isAfter(start) && tx.date.isBefore(end))
+              .toList();
+          if (weekly.isEmpty) {
+            return const Text('Aucune transaction cette semaine.');
+          }
+          double income = 0;
+          double expense = 0;
+          final Map<String, double> categories = {};
+          for (final tx in weekly) {
+            if (_isIncome(tx.type)) {
+              income += tx.amount;
+            } else {
+              expense += tx.amount;
+              final label = tx.categoryName?.isNotEmpty == true
+                  ? tx.categoryName!
+                  : tx.categoryId;
+              categories[label] = (categories[label] ?? 0) + tx.amount;
+            }
+          }
+          final topCategory = categories.entries.isEmpty
+              ? null
+              : (categories.entries.toList()
+                    ..sort((a, b) => b.value.compareTo(a.value)))
+                  .first;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Semaine du ${DateFormat('dd MMM').format(start)} au ${DateFormat('dd MMM').format(end)}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.black54,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              _WeeklyLine(
+                label: 'Revenus',
+                value: _formatMoney(income),
+                color: const Color(0xFF16A34A),
+              ),
+              const SizedBox(height: 6),
+              _WeeklyLine(
+                label: 'Dépenses',
+                value: _formatMoney(expense),
+                color: const Color(0xFFEF4444),
+              ),
+              const SizedBox(height: 10),
+              if (topCategory != null)
+                Text(
+                  'Catégorie principale : ${topCategory.key}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _WeeklyLine extends StatelessWidget {
+  const _WeeklyLine({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+bool _isIncome(String type) {
+  final value = type.toLowerCase();
+  return value.contains('revenu') || value == 'income';
+}
+
+String _formatMoney(double value) {
+  final formatter = NumberFormat.decimalPattern();
+  return '${formatter.format(value.round())} CDF';
 }

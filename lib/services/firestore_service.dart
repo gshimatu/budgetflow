@@ -8,6 +8,52 @@ class FirestoreService {
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  Stream<Map<String, dynamic>> watchUserProfile(String uid) {
+    return _db.collection('users').doc(uid).snapshots().map(
+          (snap) => snap.data() ?? <String, dynamic>{},
+        );
+  }
+
+  Future<void> ensureUserProfile({
+    required String uid,
+    String? email,
+    String? displayName,
+  }) async {
+    await _db.collection('users').doc(uid).set(
+      {
+        'uid': uid,
+        'email': email,
+        'displayName': displayName,
+        'role': 'user',
+        'createdAt': FieldValue.serverTimestamp(),
+        'preferences': {
+          'weeklyReport': false,
+          'notifications': true,
+        },
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  Future<void> updateUserPreferences(
+    String uid, {
+    bool? weeklyReport,
+    bool? notifications,
+  }) async {
+    final updates = <String, dynamic>{};
+    if (weeklyReport != null) {
+      updates['preferences.weeklyReport'] = weeklyReport;
+    }
+    if (notifications != null) {
+      updates['preferences.notifications'] = notifications;
+    }
+    if (updates.isEmpty) return;
+    await _db.collection('users').doc(uid).set(
+      updates,
+      SetOptions(merge: true),
+    );
+  }
+
   Stream<List<TransactionModel>> watchTransactions(String uid) {
     return _db
         .collection('users')

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../services/firestore_service.dart';
+
 class AuthController extends ChangeNotifier {
   bool _isAuthenticated = false;
   bool _isLoading = false;
@@ -59,8 +61,16 @@ class AuthController extends ChangeNotifier {
     try {
       final credential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
+      final user = credential.user;
       if (displayName != null && displayName.trim().isNotEmpty) {
-        await credential.user?.updateDisplayName(displayName.trim());
+        await user?.updateDisplayName(displayName.trim());
+      }
+      if (user != null) {
+        await FirestoreService().ensureUserProfile(
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+        );
       }
       setAuthenticated(true);
       return true;
