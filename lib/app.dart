@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import 'controllers/admin_controller.dart';
@@ -29,6 +30,7 @@ class BudgetFlowApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: AppConstants.seedColor),
           useMaterial3: true,
+          textTheme: GoogleFonts.dmSansTextTheme(),
         ),
         initialRoute: AppRoutes.login,
         onGenerateRoute: AppRoutes.onGenerateRoute,
