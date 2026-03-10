@@ -63,7 +63,8 @@ class TransactionsScreen extends StatelessWidget {
                             const TextInputType.numberWithOptions(decimal: true),
                         decoration: InputDecoration(
                           labelText: 'Montant',
-                          prefixIcon: const Icon(Icons.attach_money),
+                          prefixIcon: const Icon(Icons.payments_outlined),
+                          suffixText: 'CDF',
                           filled: true,
                           fillColor: const Color(0xFFF2F6FA),
                           border: OutlineInputBorder(
@@ -112,8 +113,68 @@ class TransactionsScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      TextFormField(
-                        controller: categoryController,
+                      DropdownButtonFormField<String>(
+                        value: categoryController.text.isEmpty
+                            ? null
+                            : categoryController.text,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'Transport',
+                            child: Text('Transport'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Nourriture',
+                            child: Text('Nourriture'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Logement',
+                            child: Text('Logement'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Santé',
+                            child: Text('Santé'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Éducation',
+                            child: Text('Éducation'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Loisirs',
+                            child: Text('Loisirs'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Factures',
+                            child: Text('Factures'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Shopping',
+                            child: Text('Shopping'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Épargne',
+                            child: Text('Épargne'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Voyage',
+                            child: Text('Voyage'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Télécom',
+                            child: Text('Télécom'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Autres revenus',
+                            child: Text('Autres revenus'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Autre',
+                            child: Text('Autre'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setState(() => categoryController.text = value);
+                        },
                         decoration: InputDecoration(
                           labelText: 'Catégorie',
                           prefixIcon: const Icon(Icons.category_outlined),
@@ -126,7 +187,7 @@ class TransactionsScreen extends StatelessWidget {
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Veuillez saisir une catégorie';
+                            return 'Veuillez choisir une catégorie';
                           }
                           return null;
                         },
