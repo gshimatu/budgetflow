@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/transaction_model.dart';
 import '../../routes/app_routes.dart';
 import '../../services/firestore_service.dart';
+import '../../controllers/theme_controller.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -146,6 +148,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
     const brandGreen = Color(0xFF33CC33);
     const brandCyan = Color(0xFF0BC1DE);
+    final scheme = Theme.of(context).colorScheme;
 
     if (user == null) {
       return Scaffold(
@@ -155,7 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: scheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -225,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: scheme.surface,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -245,7 +248,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           labelText: 'Nom complet',
                           prefixIcon: const Icon(Icons.person_outline),
                           filled: true,
-                          fillColor: const Color(0xFFF2F6FA),
+                          fillColor: scheme.surfaceContainerHighest,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -266,7 +269,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           labelText: 'Email',
                           prefixIcon: const Icon(Icons.mail_outline),
                           filled: true,
-                          fillColor: const Color(0xFFF2F6FA),
+                          fillColor: scheme.surfaceContainerHighest,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -365,7 +368,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: scheme.surface,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -464,7 +467,7 @@ class _PreferencesCardState extends State<_PreferencesCard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -498,13 +501,21 @@ class _PreferencesCardState extends State<_PreferencesCard> {
             },
           ),
           const Divider(height: 1),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.color_lens_outlined),
-            title: const Text('Thème'),
-            subtitle: const Text('Clair'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
+          Consumer<ThemeController>(
+            builder: (context, themeController, _) {
+              return SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                secondary: const Icon(Icons.dark_mode_outlined),
+                title: const Text('Mode sombre'),
+                subtitle: Text(
+                  themeController.isDark ? 'Sombre' : 'Clair',
+                ),
+                value: themeController.isDark,
+                onChanged: (value) {
+                  themeController.setDarkMode(value);
+                },
+              );
+            },
           ),
         ],
       ),
@@ -522,7 +533,7 @@ class _WeeklyReportCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(

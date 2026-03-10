@@ -19,20 +19,21 @@ class FirestoreService {
     String? email,
     String? displayName,
   }) async {
-    await _db.collection('users').doc(uid).set(
-      {
-        'uid': uid,
-        'email': email,
-        'displayName': displayName,
-        'role': 'user',
-        'createdAt': FieldValue.serverTimestamp(),
-        'preferences': {
-          'weeklyReport': false,
-          'notifications': true,
-        },
+    final doc = await _db.collection('users').doc(uid).get();
+    if (doc.exists) {
+      return;
+    }
+    await _db.collection('users').doc(uid).set({
+      'uid': uid,
+      'email': email,
+      'displayName': displayName,
+      'role': 'user',
+      'createdAt': FieldValue.serverTimestamp(),
+      'preferences': {
+        'weeklyReport': false,
+        'notifications': true,
       },
-      SetOptions(merge: true),
-    );
+    });
   }
 
   Future<void> updateUserPreferences(

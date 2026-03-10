@@ -6,6 +6,7 @@ import 'controllers/admin_controller.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/category_controller.dart';
 import 'controllers/stats_controller.dart';
+import 'controllers/theme_controller.dart';
 import 'controllers/transaction_controller.dart';
 import 'controllers/user_controller.dart';
 import 'routes/app_routes.dart';
@@ -24,17 +25,34 @@ class BudgetFlowApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CategoryController()),
         ChangeNotifierProvider(create: (_) => StatsController()),
         ChangeNotifierProvider(create: (_) => AdminController()),
+        ChangeNotifierProvider(create: (_) => ThemeController()),
       ],
-      child: MaterialApp(
-        title: AppConstants.appName,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: AppConstants.seedColor),
-          useMaterial3: true,
-          textTheme: GoogleFonts.dmSansTextTheme(),
-        ),
-        debugShowCheckedModeBanner: false,
-        initialRoute: AppRoutes.login,
-        onGenerateRoute: AppRoutes.onGenerateRoute,
+      child: Consumer<ThemeController>(
+        builder: (context, themeController, _) {
+          return MaterialApp(
+            title: AppConstants.appName,
+            theme: ThemeData(
+              colorScheme:
+                  ColorScheme.fromSeed(seedColor: AppConstants.seedColor),
+              useMaterial3: true,
+              textTheme: GoogleFonts.dmSansTextTheme(),
+            ),
+            darkTheme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: AppConstants.seedColor,
+                brightness: Brightness.dark,
+              ),
+              useMaterial3: true,
+              textTheme: GoogleFonts.dmSansTextTheme(
+                ThemeData(brightness: Brightness.dark).textTheme,
+              ),
+            ),
+            themeMode: themeController.themeMode,
+            debugShowCheckedModeBanner: false,
+            initialRoute: AppRoutes.login,
+            onGenerateRoute: AppRoutes.onGenerateRoute,
+          );
+        },
       ),
     );
   }

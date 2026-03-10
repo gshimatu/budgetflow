@@ -30,8 +30,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       );
     }
 
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: scheme.surface,
       appBar: AppBar(
         title: const Text('Catégories'),
         actions: [
@@ -108,7 +109,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           child: Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
             ),
             child: StatefulBuilder(
@@ -232,8 +233,14 @@ class _CategoryGrid extends StatelessWidget {
           .map(
             (cat) => Chip(
               label: Text(cat.name),
-              backgroundColor: const Color(0xFFEEF6FF),
-              side: const BorderSide(color: Color(0xFFD6E7FF)),
+              backgroundColor:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+              side: BorderSide(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.3),
+              ),
             ),
           )
           .toList(),

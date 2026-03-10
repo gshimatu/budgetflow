@@ -51,7 +51,7 @@ class TransactionsScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: StreamBuilder<List<CategoryModel>>(
@@ -114,7 +114,9 @@ class TransactionsScreen extends StatelessWidget {
                                       const Icon(Icons.payments_outlined),
                                   suffixText: 'CDF',
                                   filled: true,
-                                  fillColor: const Color(0xFFF2F6FA),
+                                  fillColor: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: BorderSide.none,
@@ -153,7 +155,9 @@ class TransactionsScreen extends StatelessWidget {
                                 decoration: InputDecoration(
                                   labelText: 'Type',
                                   filled: true,
-                                  fillColor: const Color(0xFFF2F6FA),
+                                  fillColor: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: BorderSide.none,
@@ -184,7 +188,9 @@ class TransactionsScreen extends StatelessWidget {
                                   prefixIcon:
                                       const Icon(Icons.category_outlined),
                                   filled: true,
-                                  fillColor: const Color(0xFFF2F6FA),
+                                  fillColor: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: BorderSide.none,
@@ -205,7 +211,9 @@ class TransactionsScreen extends StatelessWidget {
                                     prefixIcon:
                                         const Icon(Icons.edit_outlined),
                                     filled: true,
-                                    fillColor: const Color(0xFFF2F6FA),
+                                    fillColor: Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16),
                                       borderSide: BorderSide.none,
@@ -230,7 +238,9 @@ class TransactionsScreen extends StatelessWidget {
                                   labelText: 'Note (optionnel)',
                                   prefixIcon: const Icon(Icons.note_outlined),
                                   filled: true,
-                                  fillColor: const Color(0xFFF2F6FA),
+                                  fillColor: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: BorderSide.none,
@@ -337,8 +347,9 @@ class TransactionsScreen extends StatelessWidget {
       );
     }
 
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: scheme.surface,
       appBar: AppBar(
         title: const Text('Transactions'),
         actions: [
@@ -570,6 +581,7 @@ class _TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final isIncome = _isIncome(tx.type);
     final amountColor =
         isIncome ? const Color(0xFF16A34A) : const Color(0xFFEF4444);
@@ -584,7 +596,7 @@ class _TransactionTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: scheme.surface,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
