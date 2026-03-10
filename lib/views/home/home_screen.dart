@@ -265,13 +265,14 @@ class _BalanceCard extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 16),
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
             children: [
               _BalanceChip(
                 label: 'Revenus ${_formatMoney(income)}',
                 icon: Icons.trending_up,
               ),
-              const SizedBox(width: 12),
               _BalanceChip(
                 label: 'Dépenses ${_formatMoney(expense)}',
                 icon: Icons.trending_down,

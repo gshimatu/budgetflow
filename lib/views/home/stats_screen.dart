@@ -6,8 +6,24 @@ import 'package:intl/intl.dart';
 import '../../models/transaction_model.dart';
 import '../../services/firestore_service.dart';
 
-class StatsScreen extends StatelessWidget {
+class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
+
+  @override
+  State<StatsScreen> createState() => _StatsScreenState();
+}
+
+class _StatsScreenState extends State<StatsScreen> {
+  int? _selectedMonth;
+  int? _selectedYear;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _selectedMonth = now.month;
+    _selectedYear = now.year;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,15 +53,40 @@ class StatsScreen extends StatelessWidget {
             );
           }
 
-          final summary = _buildSummary(transactions);
-          final expensesByCategory = _groupExpensesByCategory(transactions);
-          final monthlySeries = _buildMonthlySeries(transactions);
+          final years = _availableYears(transactions);
+          _selectedYear ??= years.first;
+          _selectedMonth ??= DateTime.now().month;
+
+          final filtered = _filterByMonth(
+            transactions,
+            _selectedYear!,
+            _selectedMonth!,
+          );
+          final summary = _buildSummary(filtered);
+          final expensesByCategory = _groupExpensesByCategory(filtered);
+          final monthlySeries = _buildMonthlySeries(
+            transactions,
+            _selectedYear!,
+            _selectedMonth!,
+          );
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _FilterRow(
+                  selectedMonth: _selectedMonth!,
+                  selectedYear: _selectedYear!,
+                  years: years,
+                  onMonthChanged: (value) {
+                    setState(() => _selectedMonth = value);
+                  },
+                  onYearChanged: (value) {
+                    setState(() => _selectedYear = value);
+                  },
+                ),
+                const SizedBox(height: 16),
                 _SummaryRow(summary: summary),
                 const SizedBox(height: 20),
                 _SectionTitle(title: 'Répartition des dépenses'),
@@ -62,6 +103,24 @@ class StatsScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+List<int> _availableYears(List<TransactionModel> items) {
+  final years = items.map((e) => e.date.year).toSet().toList()..sort();
+  if (years.isEmpty) {
+    years.add(DateTime.now().year);
+  }
+  return years;
+}
+
+List<TransactionModel> _filterByMonth(
+  List<TransactionModel> items,
+  int year,
+  int month,
+) {
+  return items
+      .where((e) => e.date.year == year && e.date.month == month)
+      .toList();
 }
 
 class _SummaryData {
@@ -105,11 +164,14 @@ Map<String, double> _groupExpensesByCategory(List<TransactionModel> items) {
   return totals;
 }
 
-List<_MonthlyPoint> _buildMonthlySeries(List<TransactionModel> items) {
-  final now = DateTime.now();
+List<_MonthlyPoint> _buildMonthlySeries(
+  List<TransactionModel> items,
+  int year,
+  int selectedMonth,
+) {
   final months = List.generate(
     6,
-    (index) => DateTime(now.year, now.month - (5 - index)),
+    (index) => DateTime(year, selectedMonth - (5 - index)),
   );
 
   final Map<String, double> income = {};
@@ -135,11 +197,113 @@ List<_MonthlyPoint> _buildMonthlySeries(List<TransactionModel> items) {
       .toList();
 }
 
-String _monthKey(DateTime date) => '${date.year}-${date.month.toString().padLeft(2, '0')}';
+String _monthKey(DateTime date) =>
+    '${date.year}-${date.month.toString().padLeft(2, '0')}';
 
 bool _isIncome(String type) {
   final value = type.toLowerCase();
   return value.contains('revenu') || value == 'income';
+}
+
+class _FilterRow extends StatelessWidget {
+  const _FilterRow({
+    required this.selectedMonth,
+    required this.selectedYear,
+    required this.years,
+    required this.onMonthChanged,
+    required this.onYearChanged,
+  });
+
+  final int selectedMonth;
+  final int selectedYear;
+  final List<int> years;
+  final ValueChanged<int> onMonthChanged;
+  final ValueChanged<int> onYearChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final monthNames = List.generate(
+      12,
+      (index) => DateFormat.MMM().format(DateTime(2000, index + 1)),
+    );
+    return Row(
+      children: [
+        Expanded(
+          child: _DropdownCard<int>(
+            label: 'Mois',
+            value: selectedMonth,
+            items: List.generate(
+              12,
+              (index) => DropdownMenuItem(
+                value: index + 1,
+                child: Text(monthNames[index]),
+              ),
+            ),
+            onChanged: onMonthChanged,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _DropdownCard<int>(
+            label: 'Année',
+            value: selectedYear,
+            items: years
+                .map(
+                  (year) => DropdownMenuItem(
+                    value: year,
+                    child: Text(year.toString()),
+                  ),
+                )
+                .toList(),
+            onChanged: onYearChanged,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DropdownCard<T> extends StatelessWidget {
+  const _DropdownCard({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  final String label;
+  final T value;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          isExpanded: true,
+          items: items,
+          onChanged: (value) {
+            if (value == null) return;
+            onChanged(value);
+          },
+        ),
+      ),
+    );
+  }
 }
 
 class _SummaryRow extends StatelessWidget {
@@ -250,6 +414,11 @@ class _PieChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (data.isEmpty) {
+      return const _EmptyCard(
+        message: 'Aucune dépense pour ce mois.',
+      );
+    }
     final total = data.values.fold<double>(0, (a, b) => a + b);
     final colors = const [
       Color(0xFF33CC33),
@@ -341,6 +510,12 @@ class _MonthlyChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasData = data.any((item) => item.income > 0 || item.expense > 0);
+    if (!hasData) {
+      return const _EmptyCard(
+        message: 'Aucune donnée pour cette période.',
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -424,6 +599,38 @@ class _SectionTitle extends StatelessWidget {
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
           ),
+    );
+  }
+}
+
+class _EmptyCard extends StatelessWidget {
+  const _EmptyCard({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          message,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.black54,
+              ),
+        ),
+      ),
     );
   }
 }
