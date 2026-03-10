@@ -439,8 +439,28 @@ class _PreferencesCard extends StatefulWidget {
 }
 
 class _PreferencesCardState extends State<_PreferencesCard> {
+  bool _notifications = true;
+  bool _weeklyReport = false;
+  bool _initialized = false;
+
+  @override
+  void didUpdateWidget(covariant _PreferencesCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.notifications != widget.notifications) {
+      _notifications = widget.notifications;
+    }
+    if (oldWidget.weeklyReport != widget.weeklyReport) {
+      _weeklyReport = widget.weeklyReport;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!_initialized) {
+      _notifications = widget.notifications;
+      _weeklyReport = widget.weeklyReport;
+      _initialized = true;
+    }
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -460,16 +480,22 @@ class _PreferencesCardState extends State<_PreferencesCard> {
             contentPadding: EdgeInsets.zero,
             title: const Text('Notifications'),
             subtitle: const Text('Alertes sur vos dépenses'),
-            value: widget.notifications,
-            onChanged: widget.onToggleNotifications,
+            value: _notifications,
+            onChanged: (value) {
+              setState(() => _notifications = value);
+              widget.onToggleNotifications(value);
+            },
           ),
           const Divider(height: 1),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Rapport hebdo'),
             subtitle: const Text('Résumé chaque lundi'),
-            value: widget.weeklyReport,
-            onChanged: widget.onToggleWeeklyReport,
+            value: _weeklyReport,
+            onChanged: (value) {
+              setState(() => _weeklyReport = value);
+              widget.onToggleWeeklyReport(value);
+            },
           ),
           const Divider(height: 1),
           ListTile(

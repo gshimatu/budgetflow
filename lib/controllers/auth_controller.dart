@@ -34,10 +34,18 @@ class AuthController extends ChangeNotifier {
     setLoading(true);
     setError(null);
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      final user = credential.user;
+      if (user != null) {
+        await FirestoreService().ensureUserProfile(
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+        );
+      }
       setAuthenticated(true);
       return true;
     } on FirebaseAuthException catch (e) {
