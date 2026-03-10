@@ -32,6 +32,7 @@ class BudgetFlowApp extends StatelessWidget {
           useMaterial3: true,
           textTheme: GoogleFonts.dmSansTextTheme(),
         ),
+        debugShowCheckedModeBanner: false,
         initialRoute: AppRoutes.login,
         onGenerateRoute: AppRoutes.onGenerateRoute,
       ),
