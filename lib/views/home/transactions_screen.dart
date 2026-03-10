@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/category_model.dart';
 import '../../models/transaction_model.dart';
 import '../../services/firestore_service.dart';
 
@@ -11,10 +12,11 @@ class TransactionsScreen extends StatelessWidget {
   Future<void> _openAddTransaction(BuildContext context, String uid) async {
     final formKey = GlobalKey<FormState>();
     final amountController = TextEditingController();
-    final categoryController = TextEditingController();
     final noteController = TextEditingController();
     DateTime selectedDate = DateTime.now();
     String type = 'expense';
+    String? selectedCategory;
+    String? customCategory;
 
     await showModalBottomSheet(
       context: context,
@@ -35,238 +37,251 @@ class TransactionsScreen extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Nouvelle transaction',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.close),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: amountController,
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
-                        decoration: InputDecoration(
-                          labelText: 'Montant',
-                          prefixIcon: const Icon(Icons.payments_outlined),
-                          suffixText: 'CDF',
-                          filled: true,
-                          fillColor: const Color(0xFFF2F6FA),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Veuillez saisir un montant';
+                child: StreamBuilder<List<CategoryModel>>(
+                  stream: FirestoreService().watchGlobalCategories(),
+                  builder: (context, globalSnapshot) {
+                    return StreamBuilder<List<CategoryModel>>(
+                      stream: FirestoreService().watchUserCategories(uid),
+                      builder: (context, userSnapshot) {
+                        final globalCategories = globalSnapshot.data ?? [];
+                        final userCategories = userSnapshot.data ?? [];
+                        final names = <String>{};
+                        for (final cat in [...globalCategories, ...userCategories]) {
+                          if (cat.name.trim().isNotEmpty) {
+                            names.add(cat.name.trim());
                           }
-                          final parsed = double.tryParse(
-                            value.replaceAll(',', '.'),
-                          );
-                          if (parsed == null || parsed <= 0) {
-                            return 'Montant invalide';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: type,
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'expense',
-                            child: Text('Dépense'),
+                        }
+                        final categoryItems = names.toList()..sort();
+                        if (selectedCategory == null) {
+                          selectedCategory = categoryItems.isNotEmpty
+                              ? categoryItems.first
+                              : 'Autre';
+                        }
+                        return Form(
+                          key: formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Nouvelle transaction',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                  const Spacer(),
+                                  IconButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    icon: const Icon(Icons.close),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: amountController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                decoration: InputDecoration(
+                                  labelText: 'Montant',
+                                  prefixIcon:
+                                      const Icon(Icons.payments_outlined),
+                                  suffixText: 'CDF',
+                                  filled: true,
+                                  fillColor: const Color(0xFFF2F6FA),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Veuillez saisir un montant';
+                                  }
+                                  final parsed = double.tryParse(
+                                    value.replaceAll(',', '.'),
+                                  );
+                                  if (parsed == null || parsed <= 0) {
+                                    return 'Montant invalide';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownButtonFormField<String>(
+                                value: type,
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'expense',
+                                    child: Text('Dépense'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'income',
+                                    child: Text('Revenu'),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  setState(() => type = value);
+                                },
+                                decoration: InputDecoration(
+                                  labelText: 'Type',
+                                  filled: true,
+                                  fillColor: const Color(0xFFF2F6FA),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownButtonFormField<String>(
+                                value: selectedCategory,
+                                items: [
+                                  ...categoryItems.map(
+                                    (name) => DropdownMenuItem(
+                                      value: name,
+                                      child: Text(name),
+                                    ),
+                                  ),
+                                  const DropdownMenuItem(
+                                    value: 'Autre',
+                                    child: Text('Autre'),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  setState(() => selectedCategory = value);
+                                },
+                                decoration: InputDecoration(
+                                  labelText: 'Catégorie',
+                                  prefixIcon:
+                                      const Icon(Icons.category_outlined),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF2F6FA),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Veuillez choisir une catégorie';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              if (selectedCategory == 'Autre') ...[
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  decoration: InputDecoration(
+                                    labelText: 'Nom de la catégorie',
+                                    prefixIcon:
+                                        const Icon(Icons.edit_outlined),
+                                    filled: true,
+                                    fillColor: const Color(0xFFF2F6FA),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                  onChanged: (value) =>
+                                      customCategory = value,
+                                  validator: (value) {
+                                    if (selectedCategory == 'Autre' &&
+                                        (value == null ||
+                                            value.trim().isEmpty)) {
+                                      return 'Veuillez saisir une catégorie';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: noteController,
+                                decoration: InputDecoration(
+                                  labelText: 'Note (optionnel)',
+                                  prefixIcon: const Icon(Icons.note_outlined),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF2F6FA),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                maxLines: 2,
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Date: ${DateFormat('dd MMM yyyy').format(selectedDate)}',
+                                      style:
+                                          Theme.of(context).textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      final picked = await showDatePicker(
+                                        context: context,
+                                        firstDate: DateTime(2020),
+                                        lastDate: DateTime(2100),
+                                        initialDate: selectedDate,
+                                      );
+                                      if (picked != null) {
+                                        setState(() => selectedDate = picked);
+                                      }
+                                    },
+                                    child: const Text('Choisir'),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton(
+                                  onPressed: () async {
+                                    if (!formKey.currentState!.validate()) {
+                                      return;
+                                    }
+                                    final amount = double.parse(
+                                      amountController.text
+                                          .trim()
+                                          .replaceAll(',', '.'),
+                                    );
+                                    final chosen = selectedCategory == 'Autre'
+                                        ? (customCategory ?? '')
+                                        : (selectedCategory ?? '');
+                                    final categoryName = chosen.trim();
+                                    final transaction = TransactionModel(
+                                      id: '',
+                                      amount: amount,
+                                      type: type,
+                                      categoryId:
+                                          categoryName.toLowerCase().trim(),
+                                      categoryName: categoryName,
+                                      date: selectedDate,
+                                      note: noteController.text.trim(),
+                                    );
+                                    await FirestoreService()
+                                        .addTransaction(uid, transaction);
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                    }
+                                  },
+                                  child: const Text('Ajouter'),
+                                ),
+                              ),
+                            ],
                           ),
-                          DropdownMenuItem(
-                            value: 'income',
-                            child: Text('Revenu'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => type = value);
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'Type',
-                          filled: true,
-                          fillColor: const Color(0xFFF2F6FA),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: categoryController.text.isEmpty
-                            ? null
-                            : categoryController.text,
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'Transport',
-                            child: Text('Transport'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Nourriture',
-                            child: Text('Nourriture'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Logement',
-                            child: Text('Logement'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Santé',
-                            child: Text('Santé'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Éducation',
-                            child: Text('Éducation'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Loisirs',
-                            child: Text('Loisirs'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Factures',
-                            child: Text('Factures'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Shopping',
-                            child: Text('Shopping'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Épargne',
-                            child: Text('Épargne'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Voyage',
-                            child: Text('Voyage'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Télécom',
-                            child: Text('Télécom'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Autres revenus',
-                            child: Text('Autres revenus'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Autre',
-                            child: Text('Autre'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => categoryController.text = value);
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'Catégorie',
-                          prefixIcon: const Icon(Icons.category_outlined),
-                          filled: true,
-                          fillColor: const Color(0xFFF2F6FA),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Veuillez choisir une catégorie';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: noteController,
-                        decoration: InputDecoration(
-                          labelText: 'Note (optionnel)',
-                          prefixIcon: const Icon(Icons.note_outlined),
-                          filled: true,
-                          fillColor: const Color(0xFFF2F6FA),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Date: ${DateFormat('dd MMM yyyy').format(selectedDate)}',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                firstDate: DateTime(2020),
-                                lastDate: DateTime(2100),
-                                initialDate: selectedDate,
-                              );
-                              if (picked != null) {
-                                setState(() => selectedDate = picked);
-                              }
-                            },
-                            child: const Text('Choisir'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: () async {
-                            if (!formKey.currentState!.validate()) {
-                              return;
-                            }
-                            final amount = double.parse(
-                              amountController.text
-                                  .trim()
-                                  .replaceAll(',', '.'),
-                            );
-                            final categoryName =
-                                categoryController.text.trim();
-                            final transaction = TransactionModel(
-                              id: '',
-                              amount: amount,
-                              type: type,
-                              categoryId: categoryName.toLowerCase(),
-                              categoryName: categoryName,
-                              date: selectedDate,
-                              note: noteController.text.trim(),
-                            );
-                            await FirestoreService()
-                                .addTransaction(uid, transaction);
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                            }
-                          },
-                          child: const Text('Ajouter'),
-                        ),
-                      ),
-                    ],
-                  ),
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
             );

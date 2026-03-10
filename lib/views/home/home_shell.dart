@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../controllers/user_controller.dart';
 import '../admin/admin_dashboard.dart';
+import 'categories_screen.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
 import 'stats_screen.dart';
@@ -25,6 +26,7 @@ class _HomeShellState extends State<HomeShell> {
     final tabs = <Widget>[
       const HomeScreen(),
       const TransactionsScreen(),
+      const CategoriesScreen(),
       const StatsScreen(),
       const ProfileScreen(),
       if (isAdmin) const AdminDashboard(),
@@ -34,6 +36,8 @@ class _HomeShellState extends State<HomeShell> {
       const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
       const BottomNavigationBarItem(
           icon: Icon(Icons.swap_horiz), label: 'Transactions'),
+      const BottomNavigationBarItem(
+          icon: Icon(Icons.category_outlined), label: 'Catégories'),
       const BottomNavigationBarItem(
           icon: Icon(Icons.bar_chart), label: 'Stats'),
       const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
