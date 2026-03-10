@@ -47,9 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
     const brandCyan = Color(0xFF0BC1DE);
     const brandOrange = Color(0xFFFC7520);
     final auth = context.watch<AuthController>();
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: scheme.surface,
       body: SafeArea(
         child: Stack(
           children: [
@@ -95,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: scheme.surface,
                           borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
@@ -124,10 +125,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           Text(
                             'Gérez votre budget facilement',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: Colors.black54),
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
                           ),
                         ],
                       ),
@@ -144,14 +144,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Reprenez le contrôle de vos finances.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.black54,
+                          color: scheme.onSurfaceVariant,
                         ),
                   ),
                   const SizedBox(height: 20),
                   Container(
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: scheme.surface,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
@@ -172,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               labelText: 'Email',
                               prefixIcon: const Icon(Icons.mail_outline),
                               filled: true,
-                              fillColor: const Color(0xFFF2F6FA),
+                              fillColor: scheme.surfaceContainerHighest,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,
@@ -196,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               labelText: 'Mot de passe',
                               prefixIcon: const Icon(Icons.lock_outline),
                               filled: true,
-                              fillColor: const Color(0xFFF2F6FA),
+                              fillColor: scheme.surfaceContainerHighest,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,
@@ -217,7 +217,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: () {},
-                              child: const Text('Mot de passe oublié ?'),
+                              child: Text(
+                                'Mot de passe oublié ?',
+                                style: TextStyle(color: scheme.onSurfaceVariant),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -270,7 +273,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text('Pas de compte ?'),
+                      Text(
+                        'Pas de compte ?',
+                        style: TextStyle(color: scheme.onSurfaceVariant),
+                      ),
                       TextButton(
                         onPressed: () {
                           Navigator.pushNamed(context, AppRoutes.register);

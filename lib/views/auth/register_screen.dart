@@ -52,9 +52,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     const brandCyan = Color(0xFF0BC1DE);
     const brandOrange = Color(0xFFFC7520);
     final auth = context.watch<AuthController>();
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: scheme.surface,
       body: SafeArea(
         child: Stack(
           children: [
@@ -122,14 +123,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Text(
                     'Commencez à suivre vos dépenses et revenus.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.black54,
+                          color: scheme.onSurfaceVariant,
                         ),
                   ),
                   const SizedBox(height: 20),
                   Container(
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: scheme.surface,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
@@ -149,7 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               labelText: 'Nom complet',
                               prefixIcon: const Icon(Icons.person_outline),
                               filled: true,
-                              fillColor: const Color(0xFFF2F6FA),
+                              fillColor: scheme.surfaceContainerHighest,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,
@@ -170,7 +171,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               labelText: 'Email',
                               prefixIcon: const Icon(Icons.mail_outline),
                               filled: true,
-                              fillColor: const Color(0xFFF2F6FA),
+                              fillColor: scheme.surfaceContainerHighest,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,
@@ -194,7 +195,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               labelText: 'Mot de passe',
                               prefixIcon: const Icon(Icons.lock_outline),
                               filled: true,
-                              fillColor: const Color(0xFFF2F6FA),
+                              fillColor: scheme.surfaceContainerHighest,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,
@@ -218,7 +219,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               labelText: 'Confirmer le mot de passe',
                               prefixIcon: const Icon(Icons.lock_outline),
                               filled: true,
-                              fillColor: const Color(0xFFF2F6FA),
+                              fillColor: scheme.surfaceContainerHighest,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,
@@ -281,7 +282,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             'En créant un compte, vous acceptez nos conditions.',
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.black54,
+                                  color: scheme.onSurfaceVariant,
                                 ),
                           ),
                         ],
@@ -292,7 +293,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text('Déjà inscrit ?'),
+                      Text(
+                        'Déjà inscrit ?',
+                        style: TextStyle(color: scheme.onSurfaceVariant),
+                      ),
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: const Text('Se connecter'),
