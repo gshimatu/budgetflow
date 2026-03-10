@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthController extends ChangeNotifier {
   bool _isAuthenticated = false;
@@ -22,5 +23,46 @@ class AuthController extends ChangeNotifier {
   void setAuthenticated(bool value) {
     _isAuthenticated = value;
     notifyListeners();
+  }
+
+  Future<bool> signInWithEmailPassword({
+    required String email,
+    required String password,
+  }) async {
+    setLoading(true);
+    setError(null);
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      setAuthenticated(true);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      setError(_mapAuthError(e.code));
+      return false;
+    } catch (_) {
+      setError('Une erreur est survenue. Réessaie plus tard.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  String _mapAuthError(String code) {
+    switch (code) {
+      case 'invalid-email':
+        return 'Adresse email invalide.';
+      case 'user-disabled':
+        return 'Ce compte est désactivé.';
+      case 'user-not-found':
+        return 'Aucun compte trouvé pour cet email.';
+      case 'wrong-password':
+        return 'Mot de passe incorrect.';
+      case 'too-many-requests':
+        return 'Trop de tentatives. Réessaie plus tard.';
+      default:
+        return 'Connexion impossible. Vérifie vos informations.';
+    }
   }
 }
