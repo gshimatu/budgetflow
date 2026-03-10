@@ -12,7 +12,12 @@
           "package_name": "com.example.budgetflow"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "527950241960-nunm6tivi38rlkfk1e0mgsp9lmda7oem.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyChcnv_B5ZP4VO_JWgVCfSa-izltl60AUk"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "527950241960-nunm6tivi38rlkfk1e0mgsp9lmda7oem.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "527950241960-038mfqid058opiqsplb633ru7vbato9k.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.budgetflow"
+              }
+            }
+          ]
         }
       }
     }

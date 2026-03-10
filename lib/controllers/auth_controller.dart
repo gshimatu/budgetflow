@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../services/firestore_service.dart';
 
@@ -87,6 +88,44 @@ class AuthController extends ChangeNotifier {
       return false;
     } catch (_) {
       setError('Une erreur est survenue. Réessaie plus tard.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<bool> signInWithGoogle() async {
+    setLoading(true);
+    setError(null);
+    try {
+      final googleSignIn = GoogleSignIn.instance;
+      await googleSignIn.initialize();
+      final googleUser = await googleSignIn.authenticate();
+      final googleAuth = googleUser.authentication;
+      if (googleAuth.idToken == null) {
+        setLoading(false);
+        return false;
+      }
+      final credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
+      final userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+      final user = userCredential.user;
+      if (user != null) {
+        await FirestoreService().ensureUserProfile(
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+        );
+      }
+      setAuthenticated(true);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      setError(_mapAuthError(e.code));
+      return false;
+    } catch (_) {
+      setError('Connexion Google impossible. Réessaie plus tard.');
       return false;
     } finally {
       setLoading(false);

@@ -268,7 +268,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     const EdgeInsets.symmetric(vertical: 14),
                                 side: BorderSide(color: brandOrange),
                               ),
-                              onPressed: () {},
+                              onPressed: auth.isLoading
+                                  ? null
+                                  : () async {
+                                      final success =
+                                          await auth.signInWithGoogle();
+                                      if (!context.mounted) return;
+                                      if (success) {
+                                        Navigator.pushReplacementNamed(
+                                          context,
+                                          AppRoutes.home,
+                                        );
+                                      } else if (auth.errorMessage != null) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content:
+                                                Text(auth.errorMessage!),
+                                          ),
+                                        );
+                                      }
+                                    },
                               icon: Image.asset(
                                 'assets/images/Google_Logo.png',
                                 width: 20,
