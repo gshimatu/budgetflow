@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/transaction_model.dart';
+import '../../services/api_service.dart';
 import '../../services/firestore_service.dart';
+import 'transaction_form.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -84,7 +86,26 @@ class HomeScreen extends StatelessWidget {
                           expense: summary.totalExpense,
                         ),
                         const SizedBox(height: 20),
-                        _QuickActions(brandOrange: brandOrange),
+                        _QuickActions(
+                          brandOrange: brandOrange,
+                          onAddExpense: () async {
+                            if (user == null) return;
+                            await showTransactionForm(
+                              context,
+                              uid: user.uid,
+                              initialType: 'expense',
+                            );
+                          },
+                          onAddIncome: () async {
+                            if (user == null) return;
+                            await showTransactionForm(
+                              context,
+                              uid: user.uid,
+                              initialType: 'income',
+                            );
+                          },
+                          onConvert: () => _openConverter(context),
+                        ),
                         const SizedBox(height: 20),
                         _BudgetOverview(brandGreen: brandGreen),
                         const SizedBox(height: 20),
@@ -106,6 +127,225 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _openConverter(BuildContext context) async {
+  final formKey = GlobalKey<FormState>();
+  final amountController = TextEditingController();
+  String from = 'USD';
+  String to = 'CDF';
+  String? result;
+  bool loading = false;
+  String? error;
+
+  final currencies = ['USD', 'EUR', 'CDF', 'GBP', 'ZAR', 'NGN'];
+
+  await showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          final scheme = Theme.of(context).colorScheme;
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Convertisseur',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: amountController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText: 'Montant',
+                        prefixIcon: const Icon(Icons.payments_outlined),
+                        filled: true,
+                        fillColor: scheme.surfaceContainerHighest,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Veuillez saisir un montant';
+                        }
+                        final parsed = double.tryParse(
+                          value.replaceAll(',', '.'),
+                        );
+                        if (parsed == null || parsed <= 0) {
+                          return 'Montant invalide';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: from,
+                            items: currencies
+                                .map(
+                                  (code) => DropdownMenuItem(
+                                    value: code,
+                                    child: Text(code),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value == null) return;
+                              setState(() => from = value);
+                            },
+                            decoration: InputDecoration(
+                              labelText: 'De',
+                              filled: true,
+                              fillColor: scheme.surfaceContainerHighest,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: to,
+                            items: currencies
+                                .map(
+                                  (code) => DropdownMenuItem(
+                                    value: code,
+                                    child: Text(code),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value == null) return;
+                              setState(() => to = value);
+                            },
+                            decoration: InputDecoration(
+                              labelText: 'Vers',
+                              filled: true,
+                              fillColor: scheme.surfaceContainerHighest,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (error != null)
+                      Text(
+                        error!,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: Colors.redAccent),
+                      ),
+                    if (result != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        result!,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: loading
+                            ? null
+                            : () async {
+                                if (!formKey.currentState!.validate()) {
+                                  return;
+                                }
+                                setState(() {
+                                  loading = true;
+                                  error = null;
+                                });
+                                try {
+                                  final amount = double.parse(
+                                    amountController.text
+                                        .trim()
+                                        .replaceAll(',', '.'),
+                                  );
+                                  final rate = await ApiService().getRate(
+                                    from: from,
+                                    to: to,
+                                  );
+                                  final converted = amount * rate;
+                                  setState(() {
+                                    result =
+                                        '${converted.toStringAsFixed(2)} $to';
+                                  });
+                                } catch (e) {
+                                  setState(() {
+                                    error = e.toString().replaceFirst(
+                                          'Exception: ',
+                                          '',
+                                        );
+                                  });
+                                } finally {
+                                  setState(() => loading = false);
+                                }
+                              },
+                        child: loading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text('Convertir'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
 }
 
 class _SummaryData {
@@ -319,9 +559,17 @@ class _BalanceChip extends StatelessWidget {
 }
 
 class _QuickActions extends StatelessWidget {
-  const _QuickActions({required this.brandOrange});
+  const _QuickActions({
+    required this.brandOrange,
+    required this.onAddExpense,
+    required this.onAddIncome,
+    required this.onConvert,
+  });
 
   final Color brandOrange;
+  final VoidCallback onAddExpense;
+  final VoidCallback onAddIncome;
+  final VoidCallback onConvert;
 
   @override
   Widget build(BuildContext context) {
@@ -343,6 +591,7 @@ class _QuickActions extends StatelessWidget {
                 label: 'Ajouter dépense',
                 icon: Icons.remove_circle_outline,
                 color: brandOrange,
+                onTap: onAddExpense,
               ),
             ),
             const SizedBox(width: 12),
@@ -351,6 +600,7 @@ class _QuickActions extends StatelessWidget {
                 label: 'Ajouter revenu',
                 icon: Icons.add_circle_outline,
                 color: const Color(0xFF22C55E),
+                onTap: onAddIncome,
               ),
             ),
             const SizedBox(width: 12),
@@ -359,6 +609,7 @@ class _QuickActions extends StatelessWidget {
                 label: 'Convertir',
                 icon: Icons.currency_exchange,
                 color: const Color(0xFF0BC1DE),
+                onTap: onConvert,
               ),
             ),
           ],
@@ -373,48 +624,54 @@ class _ActionTile extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.color,
+    required this.onTap,
   });
 
   final String label;
   final IconData icon;
   final Color color;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
             ),
-            child: Icon(icon, color: color),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }
