@@ -132,22 +132,6 @@ class _HeaderSection extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: brandOrange.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Premium',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: brandOrange,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ),
                 ],
               ),
             ],
