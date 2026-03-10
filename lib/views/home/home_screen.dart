@@ -444,11 +444,7 @@ class _HeaderSection extends StatelessWidget {
             ],
           ),
         ),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.notifications_none),
-          color: brandGreen,
-        ),
+        const SizedBox(width: 8),
       ],
     );
   }
