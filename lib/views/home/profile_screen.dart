@@ -124,6 +124,209 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _changePassword() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _showError('Utilisateur non connecte.');
+      return;
+    }
+
+    final hasPasswordProvider = user.providerData
+        .any((provider) => provider.providerId == 'password');
+    if (!hasPasswordProvider) {
+      _showError(
+        'Connexion via un fournisseur externe. Changez le mot de passe depuis ce fournisseur.',
+      );
+      return;
+    }
+
+    final oldController = TextEditingController();
+    final newController = TextEditingController();
+    final confirmController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool saving = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Changer le mot de passe',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: oldController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'Ancien mot de passe',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Veuillez saisir l\'ancien mot de passe';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: newController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'Nouveau mot de passe',
+                          prefixIcon: const Icon(Icons.lock_reset),
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Veuillez saisir un nouveau mot de passe';
+                          }
+                          if (value.length < 6) {
+                            return 'Au moins 6 caracteres';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: confirmController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'Confirmer le mot de passe',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Veuillez confirmer le mot de passe';
+                          }
+                          if (value != newController.text) {
+                            return 'Les mots de passe ne correspondent pas';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: saving
+                              ? null
+                              : () async {
+                                  if (!formKey.currentState!.validate()) {
+                                    return;
+                                  }
+                                  setState(() => saving = true);
+                                  try {
+                                    final email = user.email;
+                                    if (email == null) {
+                                      throw FirebaseAuthException(
+                                        code: 'invalid-email',
+                                      );
+                                    }
+                                    final credential =
+                                        EmailAuthProvider.credential(
+                                      email: email,
+                                      password: oldController.text,
+                                    );
+                                    await user
+                                        .reauthenticateWithCredential(
+                                            credential);
+                                    await user
+                                        .updatePassword(newController.text);
+                                    if (!mounted) return;
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content:
+                                            Text('Mot de passe mis a jour.'),
+                                      ),
+                                    );
+                                  } on FirebaseAuthException catch (e) {
+                                    _showError(_mapAuthError(e.code));
+                                  } catch (_) {
+                                    _showError(
+                                      'Impossible de changer le mot de passe.',
+                                    );
+                                  } finally {
+                                    if (mounted) {
+                                      setState(() => saving = false);
+                                    }
+                                  }
+                                },
+                          child: saving
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Mettre a jour'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -132,6 +335,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   String _mapAuthError(String code) {
     switch (code) {
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Ancien mot de passe incorrect.';
+      case 'weak-password':
+        return 'Mot de passe trop faible.';
       case 'requires-recent-login':
         return 'Veuillez vous reconnecter pour continuer.';
       case 'email-already-in-use':
@@ -380,6 +588,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Column(
                   children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.lock_reset),
+                      title: const Text('Changer le mot de passe'),
+                      onTap: _changePassword,
+                    ),
+                    const Divider(height: 1),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.logout),
