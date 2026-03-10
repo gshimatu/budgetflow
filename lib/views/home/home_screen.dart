@@ -1,4 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../../models/transaction_model.dart';
+import '../../services/firestore_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -9,6 +14,7 @@ class HomeScreen extends StatelessWidget {
     const brandCyan = Color(0xFF0BC1DE);
     const brandOrange = Color(0xFFFC7520);
 
+    final user = FirebaseAuth.instance.currentUser;
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC),
       body: SafeArea(
@@ -46,39 +52,98 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _HeaderSection(
-                    brandOrange: brandOrange,
-                    brandGreen: brandGreen,
-                  ),
-                  const SizedBox(height: 20),
-                  _BalanceCard(
-                    brandGreen: brandGreen,
-                    brandCyan: brandCyan,
-                  ),
-                  const SizedBox(height: 20),
-                  _QuickActions(brandOrange: brandOrange),
-                  const SizedBox(height: 20),
-                  _BudgetOverview(brandGreen: brandGreen),
-                  const SizedBox(height: 20),
-                  _InsightsRow(
-                    brandCyan: brandCyan,
-                    brandOrange: brandOrange,
-                  ),
-                  const SizedBox(height: 20),
-                  const _RecentTransactions(),
-                ],
+            if (user == null)
+              const Center(child: Text('Connectez-vous pour voir vos données.'))
+            else
+              StreamBuilder<List<TransactionModel>>(
+                stream: FirestoreService().watchTransactions(user.uid),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final transactions = snapshot.data ?? [];
+                  final summary = _buildSummary(transactions);
+                  final recent = transactions.take(3).toList();
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _HeaderSection(
+                          brandOrange: brandOrange,
+                          brandGreen: brandGreen,
+                        ),
+                        const SizedBox(height: 20),
+                        _BalanceCard(
+                          brandGreen: brandGreen,
+                          brandCyan: brandCyan,
+                          balance: summary.balance,
+                          income: summary.totalIncome,
+                          expense: summary.totalExpense,
+                        ),
+                        const SizedBox(height: 20),
+                        _QuickActions(brandOrange: brandOrange),
+                        const SizedBox(height: 20),
+                        _BudgetOverview(brandGreen: brandGreen),
+                        const SizedBox(height: 20),
+                        _InsightsRow(
+                          brandCyan: brandCyan,
+                          brandOrange: brandOrange,
+                          income: summary.totalIncome,
+                          expense: summary.totalExpense,
+                        ),
+                        const SizedBox(height: 20),
+                        _RecentTransactions(transactions: recent),
+                      ],
+                    ),
+                  );
+                },
               ),
-            ),
           ],
         ),
       ),
     );
   }
+}
+
+class _SummaryData {
+  const _SummaryData({
+    required this.totalIncome,
+    required this.totalExpense,
+    required this.balance,
+  });
+
+  final double totalIncome;
+  final double totalExpense;
+  final double balance;
+}
+
+_SummaryData _buildSummary(List<TransactionModel> items) {
+  double income = 0;
+  double expense = 0;
+  for (final item in items) {
+    if (_isIncome(item.type)) {
+      income += item.amount;
+    } else {
+      expense += item.amount;
+    }
+  }
+  return _SummaryData(
+    totalIncome: income,
+    totalExpense: expense,
+    balance: income - expense,
+  );
+}
+
+bool _isIncome(String type) {
+  final value = type.toLowerCase();
+  return value.contains('revenu') || value == 'income';
+}
+
+String _formatMoney(double value) {
+  final formatter = NumberFormat.decimalPattern();
+  return '${formatter.format(value.round())} CDF';
 }
 
 class _HeaderSection extends StatelessWidget {
@@ -151,10 +216,16 @@ class _BalanceCard extends StatelessWidget {
   const _BalanceCard({
     required this.brandGreen,
     required this.brandCyan,
+    required this.balance,
+    required this.income,
+    required this.expense,
   });
 
   final Color brandGreen;
   final Color brandCyan;
+  final double balance;
+  final double income;
+  final double expense;
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +258,7 @@ class _BalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '1 240 500 CDF',
+            _formatMoney(balance),
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -196,9 +267,15 @@ class _BalanceCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              _BalanceChip(label: 'Revenus +18%', icon: Icons.trending_up),
+              _BalanceChip(
+                label: 'Revenus ${_formatMoney(income)}',
+                icon: Icons.trending_up,
+              ),
               const SizedBox(width: 12),
-              _BalanceChip(label: 'Dépenses -6%', icon: Icons.trending_down),
+              _BalanceChip(
+                label: 'Dépenses ${_formatMoney(expense)}',
+                icon: Icons.trending_down,
+              ),
             ],
           ),
         ],
@@ -406,10 +483,14 @@ class _InsightsRow extends StatelessWidget {
   const _InsightsRow({
     required this.brandCyan,
     required this.brandOrange,
+    required this.income,
+    required this.expense,
   });
 
   final Color brandCyan;
   final Color brandOrange;
+  final double income;
+  final double expense;
 
   @override
   Widget build(BuildContext context) {
@@ -418,7 +499,7 @@ class _InsightsRow extends StatelessWidget {
         Expanded(
           child: _InsightCard(
             title: 'Dépenses du mois',
-            value: '380 000 CDF',
+            value: _formatMoney(expense),
             color: brandOrange,
             icon: Icons.shopping_bag_outlined,
           ),
@@ -427,7 +508,7 @@ class _InsightsRow extends StatelessWidget {
         Expanded(
           child: _InsightCard(
             title: 'Revenus du mois',
-            value: '620 000 CDF',
+            value: _formatMoney(income),
             color: brandCyan,
             icon: Icons.account_balance_wallet_outlined,
           ),
@@ -498,10 +579,37 @@ class _InsightCard extends StatelessWidget {
 }
 
 class _RecentTransactions extends StatelessWidget {
-  const _RecentTransactions();
+  const _RecentTransactions({required this.transactions});
+
+  final List<TransactionModel> transactions;
 
   @override
   Widget build(BuildContext context) {
+    if (transactions.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Transactions récentes',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              TextButton(
+                onPressed: () {},
+                child: const Text('Voir tout'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text('Aucune transaction pour le moment.'),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -521,49 +629,26 @@ class _RecentTransactions extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        _TransactionTile(
-          title: 'Supermarché',
-          subtitle: 'Alimentation',
-          amount: '- 42 000 CDF',
-          icon: Icons.shopping_cart_outlined,
-          color: const Color(0xFFFC7520),
-        ),
-        _TransactionTile(
-          title: 'Salaire',
-          subtitle: 'Revenu',
-          amount: '+ 540 000 CDF',
-          icon: Icons.account_balance_wallet_outlined,
-          color: const Color(0xFF33CC33),
-        ),
-        _TransactionTile(
-          title: 'Transport',
-          subtitle: 'Taxi',
-          amount: '- 8 500 CDF',
-          icon: Icons.directions_car_outlined,
-          color: const Color(0xFF0BC1DE),
-        ),
+        ...transactions.map((tx) => _TransactionTile(tx: tx)),
       ],
     );
   }
 }
 
 class _TransactionTile extends StatelessWidget {
-  const _TransactionTile({
-    required this.title,
-    required this.subtitle,
-    required this.amount,
-    required this.icon,
-    required this.color,
-  });
+  const _TransactionTile({required this.tx});
 
-  final String title;
-  final String subtitle;
-  final String amount;
-  final IconData icon;
-  final Color color;
+  final TransactionModel tx;
 
   @override
   Widget build(BuildContext context) {
+    final isIncome = _isIncome(tx.type);
+    final amountColor =
+        isIncome ? const Color(0xFF16A34A) : const Color(0xFFEF4444);
+    final label = tx.categoryName?.isNotEmpty == true
+        ? tx.categoryName!
+        : tx.categoryId;
+    final dateLabel = DateFormat('dd MMM').format(tx.date);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -584,10 +669,13 @@ class _TransactionTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
+              color: amountColor.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color),
+            child: Icon(
+              isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+              color: amountColor,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -595,14 +683,14 @@ class _TransactionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  label,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  subtitle,
+                  dateLabel,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.black54,
                       ),
@@ -611,12 +699,10 @@ class _TransactionTile extends StatelessWidget {
             ),
           ),
           Text(
-            amount,
+            '${isIncome ? '+' : '-'} ${_formatMoney(tx.amount)}',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: amount.startsWith('-')
-                      ? const Color(0xFFEF4444)
-                      : const Color(0xFF16A34A),
+                  color: amountColor,
                 ),
           ),
         ],
