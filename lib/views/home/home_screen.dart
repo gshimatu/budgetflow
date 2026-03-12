@@ -107,7 +107,11 @@ class HomeScreen extends StatelessWidget {
                           onConvert: () => _openConverter(context),
                         ),
                         const SizedBox(height: 20),
-                        _BudgetOverview(brandGreen: brandGreen),
+                        _BudgetOverview(
+                          brandGreen: brandGreen,
+                          uid: user.uid,
+                          totalExpense: summary.totalExpense,
+                        ),
                         const SizedBox(height: 20),
                         _InsightsRow(
                           brandCyan: brandCyan,
@@ -674,66 +678,237 @@ class _ActionTile extends StatelessWidget {
 }
 
 class _BudgetOverview extends StatelessWidget {
-  const _BudgetOverview({required this.brandGreen});
+  const _BudgetOverview({
+    required this.brandGreen,
+    required this.uid,
+    required this.totalExpense,
+  });
 
   final Color brandGreen;
+  final String uid;
+  final double totalExpense;
+
+  Future<void> _editMonthlyGoal(
+    BuildContext context, {
+    required double currentGoal,
+  }) async {
+    final controller = TextEditingController(
+      text: currentGoal.toStringAsFixed(0),
+    );
+    final formKey = GlobalKey<FormState>();
+    bool saving = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Definir l\'objectif mensuel',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: controller,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Montant (CDF)',
+                          prefixIcon: const Icon(Icons.flag_outlined),
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Veuillez saisir un montant';
+                          }
+                          final parsed = double.tryParse(
+                            value.replaceAll(',', '.'),
+                          );
+                          if (parsed == null || parsed <= 0) {
+                            return 'Montant invalide';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: saving
+                              ? null
+                              : () async {
+                                  if (!formKey.currentState!.validate()) {
+                                    return;
+                                  }
+                                  setState(() => saving = true);
+                                  try {
+                                    final parsed = double.parse(
+                                      controller.text
+                                          .trim()
+                                          .replaceAll(',', '.'),
+                                    );
+                                    await FirestoreService()
+                                        .updateUserPreferences(
+                                      uid,
+                                      monthlyGoal: parsed,
+                                    );
+                                    if (!context.mounted) return;
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content:
+                                            Text('Objectif mis a jour.'),
+                                      ),
+                                    );
+                                  } finally {
+                                    if (context.mounted) {
+                                      setState(() => saving = false);
+                                    }
+                                  }
+                                },
+                          child: saving
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Enregistrer'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Objectif mensuel',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+    return StreamBuilder<Map<String, dynamic>>(
+      stream: FirestoreService().watchUserProfile(uid),
+      builder: (context, snapshot) {
+        final data = snapshot.data ?? {};
+        final prefs =
+            (data['preferences'] as Map?)?.cast<String, dynamic>() ?? {};
+        final goal = (prefs['monthlyGoal'] as num?)?.toDouble() ?? 410000;
+        final progress =
+            goal <= 0 ? 0.0 : (totalExpense / goal).clamp(0.0, 1.0) as double;
+        final remaining = (goal - totalExpense).clamp(0, goal).toDouble();
+        final percent = (progress * 100).round();
+
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 18,
+                offset: const Offset(0, 10),
               ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Objectif mensuel',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        '$percent%',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: brandGreen,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      IconButton(
+                        onPressed: () => _editMonthlyGoal(
+                          context,
+                          currentGoal: goal,
+                        ),
+                        icon: const Icon(Icons.edit_outlined),
+                        color: brandGreen,
+                        tooltip: 'Modifier',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 10,
+                  backgroundColor: const Color(0xFFE6EEF6),
+                  color: brandGreen,
+                ),
+              ),
+              const SizedBox(height: 12),
               Text(
-                '75%',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: brandGreen,
-                      fontWeight: FontWeight.w700,
+                'Budget restant : ${_formatMoney(remaining)}',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: LinearProgressIndicator(
-              value: 0.75,
-              minHeight: 10,
-              backgroundColor: const Color(0xFFE6EEF6),
-              color: brandGreen,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Budget restant : 410 000 CDF',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -32,6 +32,7 @@ class FirestoreService {
       'preferences': {
         'weeklyReport': false,
         'notifications': true,
+        'monthlyGoal': 410000,
       },
     });
   }
@@ -40,6 +41,7 @@ class FirestoreService {
     String uid, {
     bool? weeklyReport,
     bool? notifications,
+    double? monthlyGoal,
   }) async {
     final updates = <String, dynamic>{};
     if (weeklyReport != null) {
@@ -47,6 +49,9 @@ class FirestoreService {
     }
     if (notifications != null) {
       updates['preferences.notifications'] = notifications;
+    }
+    if (monthlyGoal != null) {
+      updates['preferences.monthlyGoal'] = monthlyGoal;
     }
     if (updates.isEmpty) return;
     await _db.collection('users').doc(uid).set(
