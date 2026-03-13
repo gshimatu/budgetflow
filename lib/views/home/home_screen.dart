@@ -677,7 +677,7 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-class _BudgetOverview extends StatelessWidget {
+class _BudgetOverview extends StatefulWidget {
   const _BudgetOverview({
     required this.brandGreen,
     required this.uid,
@@ -688,8 +688,14 @@ class _BudgetOverview extends StatelessWidget {
   final String uid;
   final double totalExpense;
 
-  Future<void> _editMonthlyGoal(
-    BuildContext context, {
+  @override
+  State<_BudgetOverview> createState() => _BudgetOverviewState();
+}
+
+class _BudgetOverviewState extends State<_BudgetOverview> {
+  double? _localGoal;
+
+  Future<void> _editMonthlyGoal({
     required double currentGoal,
   }) async {
     final controller = TextEditingController(
@@ -786,15 +792,27 @@ class _BudgetOverview extends StatelessWidget {
                                     );
                                     await FirestoreService()
                                         .updateUserPreferences(
-                                      uid,
+                                      widget.uid,
                                       monthlyGoal: parsed,
                                     );
+                                    if (mounted) {
+                                      setState(() => _localGoal = parsed);
+                                    }
                                     if (!context.mounted) return;
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content:
                                             Text('Objectif mis a jour.'),
+                                      ),
+                                    );
+                                  } catch (_) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Impossible de mettre a jour.',
+                                        ),
                                       ),
                                     );
                                   } finally {
@@ -830,15 +848,20 @@ class _BudgetOverview extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return StreamBuilder<Map<String, dynamic>>(
-      stream: FirestoreService().watchUserProfile(uid),
+      stream: FirestoreService().watchUserProfile(widget.uid),
       builder: (context, snapshot) {
         final data = snapshot.data ?? {};
         final prefs =
             (data['preferences'] as Map?)?.cast<String, dynamic>() ?? {};
-        final goal = (prefs['monthlyGoal'] as num?)?.toDouble() ?? 410000;
+        final goal =
+            _localGoal ?? (prefs['monthlyGoal'] as num?)?.toDouble() ?? 0;
         final progress =
-            goal <= 0 ? 0.0 : (totalExpense / goal).clamp(0.0, 1.0) as double;
-        final remaining = (goal - totalExpense).clamp(0, goal).toDouble();
+            goal <= 0
+                ? 0.0
+                : (widget.totalExpense / goal).clamp(0.0, 1.0) as double;
+        final remaining = goal <= 0
+            ? 0.0
+            : (goal - widget.totalExpense).clamp(0, goal).toDouble();
         final percent = (progress * 100).round();
 
         return Container(
@@ -866,22 +889,21 @@ class _BudgetOverview extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                   ),
-                  Row(
+                      Row(
                     children: [
                       Text(
-                        '$percent%',
+                        goal <= 0 ? 'A definir' : '$percent%',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: brandGreen,
+                              color: widget.brandGreen,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
                       IconButton(
                         onPressed: () => _editMonthlyGoal(
-                          context,
-                          currentGoal: goal,
+                          currentGoal: goal <= 0 ? 0 : goal,
                         ),
                         icon: const Icon(Icons.edit_outlined),
-                        color: brandGreen,
+                        color: widget.brandGreen,
                         tooltip: 'Modifier',
                       ),
                     ],
@@ -895,12 +917,14 @@ class _BudgetOverview extends StatelessWidget {
                   value: progress,
                   minHeight: 10,
                   backgroundColor: const Color(0xFFE6EEF6),
-                  color: brandGreen,
+                  color: widget.brandGreen,
                 ),
               ),
               const SizedBox(height: 12),
               Text(
-                'Budget restant : ${_formatMoney(remaining)}',
+                goal <= 0
+                    ? 'Definis ton objectif pour ce mois'
+                    : 'Budget restant : ${_formatMoney(remaining)}',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),

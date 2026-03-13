@@ -9,9 +9,11 @@ class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   Stream<Map<String, dynamic>> watchUserProfile(String uid) {
-    return _db.collection('users').doc(uid).snapshots().map(
-          (snap) => snap.data() ?? <String, dynamic>{},
-        );
+    return _db
+        .collection('users')
+        .doc(uid)
+        .snapshots()
+        .map((snap) => snap.data() ?? <String, dynamic>{});
   }
 
   Future<void> ensureUserProfile({
@@ -21,6 +23,17 @@ class FirestoreService {
   }) async {
     final doc = await _db.collection('users').doc(uid).get();
     if (doc.exists) {
+      // Vérifie que l'utilisateur existant a les préférences
+      final data = doc.data() ?? {};
+      if (data['preferences'] == null) {
+        await _db.collection('users').doc(uid).set({
+          'preferences': {
+            'weeklyReport': false,
+            'notifications': true,
+            'monthlyGoal': 0,
+          },
+        }, SetOptions(merge: true));
+      }
       return;
     }
     await _db.collection('users').doc(uid).set({
@@ -32,7 +45,7 @@ class FirestoreService {
       'preferences': {
         'weeklyReport': false,
         'notifications': true,
-        'monthlyGoal': 410000,
+        'monthlyGoal': 0,
       },
     });
   }
@@ -54,10 +67,21 @@ class FirestoreService {
       updates['preferences.monthlyGoal'] = monthlyGoal;
     }
     if (updates.isEmpty) return;
-    await _db.collection('users').doc(uid).set(
-      updates,
-      SetOptions(merge: true),
-    );
+
+    // S'assure que l'objet preferences existe
+    final doc = await _db.collection('users').doc(uid).get();
+    if (doc.exists && doc.data()?['preferences'] == null) {
+      updates['preferences'] = {
+        'weeklyReport': false,
+        'notifications': true,
+        'monthlyGoal': 0,
+      };
+    }
+
+    await _db
+        .collection('users')
+        .doc(uid)
+        .set(updates, SetOptions(merge: true));
   }
 
   Stream<List<TransactionModel>> watchTransactions(String uid) {
@@ -120,10 +144,7 @@ class FirestoreService {
     await _db.collection('globalCategories').add(category.toMap());
   }
 
-  Future<void> updateGlobalCategory(
-    String id,
-    CategoryModel category,
-  ) async {
+  Future<void> updateGlobalCategory(String id, CategoryModel category) async {
     await _db.collection('globalCategories').doc(id).update(category.toMap());
   }
 
@@ -154,7 +175,11 @@ class FirestoreService {
   }
 
   Stream<List<Map<String, dynamic>>> watchUsers() {
-    return _db.collection('users').orderBy('createdAt', descending: true).snapshots().map(
+    return _db
+        .collection('users')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
           (snapshot) => snapshot.docs
               .map((doc) => {'id': doc.id, ...doc.data()})
               .toList(),
@@ -162,10 +187,9 @@ class FirestoreService {
   }
 
   Future<void> updateUserRole(String uid, String role) async {
-    await _db.collection('users').doc(uid).set(
-      {'role': role},
-      SetOptions(merge: true),
-    );
+    await _db.collection('users').doc(uid).set({
+      'role': role,
+    }, SetOptions(merge: true));
   }
 
   Future<void> deleteUserProfile(String uid) async {
@@ -173,10 +197,11 @@ class FirestoreService {
   }
 
   Future<Map<String, dynamic>> getGlobalStats() async {
-    final usersCount =
-        await _db.collection('users').count().get();
-    final transactionsCount =
-        await _db.collectionGroup('transactions').count().get();
+    final usersCount = await _db.collection('users').count().get();
+    final transactionsCount = await _db
+        .collectionGroup('transactions')
+        .count()
+        .get();
 
     double totalIncome = 0;
     double totalExpense = 0;
@@ -186,7 +211,8 @@ class FirestoreService {
       final data = doc.data();
       final amount = (data['amount'] as num?)?.toDouble() ?? 0;
       final type = (data['type'] as String?) ?? 'expense';
-      final isIncome = type.toLowerCase().contains('revenu') || type == 'income';
+      final isIncome =
+          type.toLowerCase().contains('revenu') || type == 'income';
       if (isIncome) {
         totalIncome += amount;
       } else {

@@ -275,6 +275,7 @@ class _TransactionTile extends StatelessWidget {
         ? tx.categoryName!
         : tx.categoryId;
     final dateLabel = DateFormat('dd MMM yyyy').format(tx.date);
+    final timeLabel = DateFormat('HH:mm').format(tx.date);
 
     return InkWell(
       onTap: onEdit,
@@ -319,7 +320,7 @@ class _TransactionTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    dateLabel,
+                    '$dateLabel - $timeLabel',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
