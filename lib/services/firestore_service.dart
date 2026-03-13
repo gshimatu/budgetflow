@@ -196,6 +196,21 @@ class FirestoreService {
     await _db.collection('users').doc(uid).delete();
   }
 
+  Future<void> addFeedback({
+    required String uid,
+    required String type,
+    required String message,
+    String? email,
+  }) async {
+    await _db.collection('feedbacks').add({
+      'uid': uid,
+      'email': email,
+      'type': type,
+      'message': message,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<Map<String, dynamic>> getGlobalStats() async {
     final usersCount = await _db.collection('users').count().get();
     final transactionsCount = await _db

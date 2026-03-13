@@ -124,6 +124,179 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _sendFeedback() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _showError('Utilisateur non connecte.');
+      return;
+    }
+
+    final formKey = GlobalKey<FormState>();
+    final messageController = TextEditingController();
+    String type = 'Suggestion';
+    bool saving = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Envoyer un commentaire',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: type,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'Bug',
+                            child: Text('Signaler un bug'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Suggestion',
+                            child: Text('Suggestion d\'amelioration'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Commentaire',
+                            child: Text('Commentaire general'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setState(() => type = value);
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Type',
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: messageController,
+                        minLines: 3,
+                        maxLines: 6,
+                        decoration: InputDecoration(
+                          labelText: 'Votre message',
+                          alignLabelWithHint: true,
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Veuillez saisir un message';
+                          }
+                          if (value.trim().length < 5) {
+                            return 'Message trop court';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: saving
+                              ? null
+                              : () async {
+                                  if (!formKey.currentState!.validate()) {
+                                    return;
+                                  }
+                                  setState(() => saving = true);
+                                  try {
+                                    await FirestoreService().addFeedback(
+                                      uid: user.uid,
+                                      email: user.email,
+                                      type: type,
+                                      message:
+                                          messageController.text.trim(),
+                                    );
+                                    if (!context.mounted) return;
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Merci pour votre retour.'),
+                                      ),
+                                    );
+                                  } catch (_) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Envoi impossible. Reessaie plus tard.',
+                                        ),
+                                      ),
+                                    );
+                                  } finally {
+                                    if (context.mounted) {
+                                      setState(() => saving = false);
+                                    }
+                                  }
+                                },
+                          child: saving
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Envoyer'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _changePassword() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -611,6 +784,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: TextStyle(color: Color(0xFFEF4444)),
                       ),
                       onTap: _deleteAccount,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              _SectionTitle(title: 'Commentaires'),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.chat_bubble_outline),
+                      title: const Text('Envoyer un commentaire'),
+                      subtitle: const Text(
+                        'Signaler un bug ou proposer une amelioration.',
+                      ),
+                      onTap: _sendFeedback,
                     ),
                   ],
                 ),
