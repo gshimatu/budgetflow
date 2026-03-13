@@ -8,7 +8,9 @@ import '../../services/firestore_service.dart';
 import 'transaction_form.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.onViewAllTransactions});
+
+  final VoidCallback? onViewAllTransactions;
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +122,10 @@ class HomeScreen extends StatelessWidget {
                           expense: summary.totalExpense,
                         ),
                         const SizedBox(height: 20),
-                        _RecentTransactions(transactions: recent),
+                        _RecentTransactions(
+                          transactions: recent,
+                          onViewAll: onViewAllTransactions,
+                        ),
                       ],
                     ),
                   );
@@ -1038,9 +1043,13 @@ class _InsightCard extends StatelessWidget {
 }
 
 class _RecentTransactions extends StatelessWidget {
-  const _RecentTransactions({required this.transactions});
+  const _RecentTransactions({
+    required this.transactions,
+    this.onViewAll,
+  });
 
   final List<TransactionModel> transactions;
+  final VoidCallback? onViewAll;
 
   @override
   Widget build(BuildContext context) {
@@ -1058,7 +1067,7 @@ class _RecentTransactions extends StatelessWidget {
                     ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: onViewAll,
                 child: const Text('Voir tout'),
               ),
             ],
@@ -1082,7 +1091,7 @@ class _RecentTransactions extends StatelessWidget {
                   ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: onViewAll,
               child: const Text('Voir tout'),
             ),
           ],

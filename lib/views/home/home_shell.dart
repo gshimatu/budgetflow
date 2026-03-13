@@ -24,7 +24,9 @@ class _HomeShellState extends State<HomeShell> {
     final isAdmin = context.watch<UserController>().isAdmin;
 
     final tabs = <Widget>[
-      const HomeScreen(),
+      HomeScreen(
+        onViewAllTransactions: () => setState(() => _currentIndex = 1),
+      ),
       const TransactionsScreen(),
       const CategoriesScreen(),
       const StatsScreen(),
