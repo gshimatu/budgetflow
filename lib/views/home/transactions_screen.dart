@@ -6,8 +6,16 @@ import '../../models/transaction_model.dart';
 import '../../services/firestore_service.dart';
 import 'transaction_form.dart';
 
-class TransactionsScreen extends StatelessWidget {
+class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
+
+  @override
+  State<TransactionsScreen> createState() => _TransactionsScreenState();
+}
+
+class _TransactionsScreenState extends State<TransactionsScreen> {
+  _DateFilter _filter = _DateFilter.all;
+  DateTime? _customDay;
 
   Future<void> _openAddTransaction(BuildContext context, String uid) async {
     await showTransactionForm(context, uid: uid);
@@ -40,7 +48,11 @@ class TransactionsScreen extends StatelessWidget {
         title: const Text('Transactions'),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () async {
+              final selected = await _showFilterSheet(context);
+              if (!mounted || selected == null) return;
+              setState(() => _filter = selected);
+            },
             icon: const Icon(Icons.filter_list),
           ),
         ],
@@ -54,18 +66,43 @@ class TransactionsScreen extends StatelessWidget {
           final transactions = snapshot.data ?? [];
           if (transactions.isEmpty) {
             return const Center(
-              child: Text('Aucune transaction enregistrée.'),
+              child: Text('Aucune transaction enregistree.'),
             );
           }
 
-          final summary = _buildSummary(transactions);
+          final filteredTransactions =
+              _applyFilter(transactions, _filter, _customDay);
+          if (filteredTransactions.isEmpty) {
+            return Center(
+              child: Text(_emptyMessageForFilter(_filter)),
+            );
+          }
+
+          final summary = _buildSummary(filteredTransactions);
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             children: [
               _SummaryCard(summary: summary),
+              const SizedBox(height: 12),
+              _FilterChips(
+                selected: _filter,
+                onSelected: (value) async {
+                  if (value == _DateFilter.day) {
+                    final picked = await _pickDay(context);
+                    if (picked == null) return;
+                    setState(() {
+                      _customDay = picked;
+                      _filter = value;
+                    });
+                    return;
+                  }
+                  setState(() => _filter = value);
+                },
+                selectedDay: _customDay,
+              ),
               const SizedBox(height: 16),
-              ...transactions.map(
+              ...filteredTransactions.map(
                 (tx) => _TransactionTile(
                   tx: tx,
                   onEdit: () => _openEditTransaction(context, user.uid, tx),
@@ -114,6 +151,169 @@ class TransactionsScreen extends StatelessWidget {
     );
     if (confirm != true) return;
     await FirestoreService().deleteTransaction(uid, tx.id);
+  }
+
+  Future<_DateFilter?> _showFilterSheet(BuildContext context) {
+    return showModalBottomSheet<_DateFilter>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(24),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Filtrer les transactions',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              ..._DateFilter.values.map(
+                (filter) => ListTile(
+                  title: Text(_labelForFilter(filter)),
+                  trailing: _filter == filter
+                      ? Icon(Icons.check, color: scheme.primary)
+                      : null,
+                  onTap: () => Navigator.pop(context, filter),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<DateTime?> _pickDay(BuildContext context) {
+    final now = DateTime.now();
+    return showDatePicker(
+      context: context,
+      initialDate: _customDay ?? now,
+      firstDate: DateTime(now.year - 2),
+      lastDate: DateTime(now.year + 1),
+    );
+  }
+}
+
+enum _DateFilter { all, today, day, week, month, year }
+
+String _labelForFilter(_DateFilter filter) {
+  switch (filter) {
+    case _DateFilter.today:
+      return 'Aujourd\'hui';
+    case _DateFilter.day:
+      return 'Choisir un jour';
+    case _DateFilter.week:
+      return 'Cette semaine';
+    case _DateFilter.month:
+      return 'Ce mois';
+    case _DateFilter.year:
+      return 'Cette annee';
+    case _DateFilter.all:
+    default:
+      return 'Toutes';
+  }
+}
+
+String _emptyMessageForFilter(_DateFilter filter) {
+  switch (filter) {
+    case _DateFilter.today:
+      return 'Aucune transaction aujourd\'hui.';
+    case _DateFilter.day:
+      return 'Aucune transaction pour ce jour.';
+    case _DateFilter.week:
+      return 'Aucune transaction cette semaine.';
+    case _DateFilter.month:
+      return 'Aucune transaction ce mois.';
+    case _DateFilter.year:
+      return 'Aucune transaction cette annee.';
+    case _DateFilter.all:
+    default:
+      return 'Aucune transaction enregistree.';
+  }
+}
+
+List<TransactionModel> _applyFilter(
+  List<TransactionModel> items,
+  _DateFilter filter,
+  DateTime? customDay,
+) {
+  final now = DateTime.now();
+  DateTime start;
+  DateTime end;
+
+  switch (filter) {
+    case _DateFilter.today:
+      start = DateTime(now.year, now.month, now.day);
+      end = start.add(const Duration(days: 1));
+      break;
+    case _DateFilter.day:
+      final base = customDay ?? now;
+      start = DateTime(base.year, base.month, base.day);
+      end = start.add(const Duration(days: 1));
+      break;
+    case _DateFilter.week:
+      start = DateTime(now.year, now.month, now.day)
+          .subtract(Duration(days: now.weekday - 1));
+      end = start.add(const Duration(days: 7));
+      break;
+    case _DateFilter.month:
+      start = DateTime(now.year, now.month, 1);
+      end = DateTime(now.year, now.month + 1, 1);
+      break;
+    case _DateFilter.year:
+      start = DateTime(now.year, 1, 1);
+      end = DateTime(now.year + 1, 1, 1);
+      break;
+    case _DateFilter.all:
+    default:
+      return items;
+  }
+
+  return items.where((tx) {
+    final date = tx.date;
+    return (date.isAtSameMomentAs(start) || date.isAfter(start)) &&
+        date.isBefore(end);
+  }).toList();
+}
+
+class _FilterChips extends StatelessWidget {
+  const _FilterChips({
+    required this.selected,
+    required this.onSelected,
+    required this.selectedDay,
+  });
+
+  final _DateFilter selected;
+  final ValueChanged<_DateFilter> onSelected;
+  final DateTime? selectedDay;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _DateFilter.values.map((filter) {
+        final label = filter == _DateFilter.day && selectedDay != null
+            ? 'Jour: ${DateFormat('dd/MM').format(selectedDay!)}'
+            : _labelForFilter(filter);
+        return ChoiceChip(
+          label: Text(label),
+          selected: selected == filter,
+          onSelected: (_) => onSelected(filter),
+        );
+      }).toList(),
+    );
   }
 }
 
@@ -199,7 +399,7 @@ class _SummaryCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _MiniStat(
-                  label: 'Dépenses',
+                  label: 'Depenses',
                   value: _formatMoney(summary.totalExpense),
                   color: Colors.white,
                 ),
