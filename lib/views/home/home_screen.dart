@@ -408,6 +408,9 @@ class _HeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final now = DateTime.now();
+    final dateLabel = DateFormat('dd MMM yyyy').format(now);
+    final timeLabel = DateFormat('HH:mm').format(now);
     return Row(
       children: [
         Container(
@@ -449,6 +452,13 @@ class _HeaderSection extends StatelessWidget {
                         ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '$dateLabel - $timeLabel',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
               ),
             ],
           ),
