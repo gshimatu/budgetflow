@@ -97,6 +97,10 @@ class _StatsScreenState extends State<StatsScreen> {
                 _SectionTitle(title: 'Évolution mensuelle'),
                 const SizedBox(height: 12),
                 _MonthlyChartCard(data: monthlySeries),
+                const SizedBox(height: 20),
+                _SectionTitle(title: 'Tendance (polygone)'),
+                const SizedBox(height: 12),
+                _PolygonChartCard(data: monthlySeries),
               ],
             ),
           );
@@ -430,13 +434,15 @@ class _PieChartCard extends StatelessWidget {
       Color(0xFF22C55E),
     ];
 
-    final sections = data.entries.toList().asMap().entries.map((entry) {
+    final entries = data.entries.toList();
+    final sections = entries.asMap().entries.map((entry) {
       final index = entry.key;
       final item = entry.value;
       final value = item.value;
       final percent = total == 0 ? 0 : (value / total) * 100;
+      final color = colors[index % colors.length];
       return PieChartSectionData(
-        color: colors[index % colors.length],
+        color: color,
         value: value,
         title: '${percent.toStringAsFixed(0)}%',
         radius: 48,
@@ -474,17 +480,10 @@ class _PieChartCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          ...data.entries.map(
-            (entry) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(entry.key),
-                  Text(_formatMoney(entry.value)),
-                ],
-              ),
-            ),
+          _PieLegend(
+            entries: entries,
+            colors: colors,
+            total: total,
           ),
         ],
       ),
@@ -531,57 +530,191 @@ class _MonthlyChartCard extends StatelessWidget {
         ],
       ),
       child: SizedBox(
-        height: 220,
-        child: BarChart(
-          BarChartData(
-            gridData: const FlGridData(show: false),
-            borderData: FlBorderData(show: false),
-            titlesData: FlTitlesData(
-              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (value, meta) {
-                    final index = value.toInt();
-                    if (index < 0 || index >= data.length) {
-                      return const SizedBox.shrink();
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        data[index].label,
-                        style: Theme.of(context).textTheme.labelSmall,
+        height: 260,
+        child: Column(
+          children: [
+            _ChartLegend(
+              items: const [
+                _LegendItem(label: 'Revenus', color: Color(0xFF33CC33)),
+                _LegendItem(label: 'Depenses', color: Color(0xFFFC7520)),
+              ],
+              note: 'Evolution sur les 6 derniers mois affiches.',
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: BarChart(
+                BarChartData(
+                  gridData: const FlGridData(show: false),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          final index = value.toInt();
+                          if (index < 0 || index >= data.length) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              data[index].label,
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                          );
+                        },
                       ),
+                    ),
+                  ),
+                  barGroups: data.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final point = entry.value;
+                    return BarChartGroupData(
+                      x: index,
+                      barRods: [
+                        BarChartRodData(
+                          toY: point.income,
+                          color: const Color(0xFF33CC33),
+                          width: 8,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        BarChartRodData(
+                          toY: point.expense,
+                          color: const Color(0xFFFC7520),
+                          width: 8,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ],
+                      barsSpace: 6,
                     );
-                  },
+                  }).toList(),
                 ),
               ),
             ),
-            barGroups: data.asMap().entries.map((entry) {
-              final index = entry.key;
-              final point = entry.value;
-              return BarChartGroupData(
-                x: index,
-                barRods: [
-                  BarChartRodData(
-                    toY: point.income,
-                    color: const Color(0xFF33CC33),
-                    width: 8,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  BarChartRodData(
-                    toY: point.expense,
-                    color: const Color(0xFFFC7520),
-                    width: 8,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ],
-                barsSpace: 6,
-              );
-            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PolygonChartCard extends StatelessWidget {
+  const _PolygonChartCard({required this.data});
+
+  final List<_MonthlyPoint> data;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasData = data.any((item) => item.income > 0 || item.expense > 0);
+    if (!hasData) {
+      return const _EmptyCard(
+        message: 'Aucune donnee pour cette periode.',
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
+        ],
+      ),
+      child: SizedBox(
+        height: 260,
+        child: Column(
+          children: [
+            _ChartLegend(
+              items: const [
+                _LegendItem(label: 'Revenus', color: Color(0xFF33CC33)),
+                _LegendItem(label: 'Depenses', color: Color(0xFFFC7520)),
+              ],
+              note: 'Courbes polygonales pour comparer les tendances.',
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: LineChart(
+                LineChartData(
+                  gridData: const FlGridData(show: false),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    leftTitles:
+                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles:
+                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles:
+                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          final index = value.toInt();
+                          if (index < 0 || index >= data.length) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              data[index].label,
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: data
+                          .asMap()
+                          .entries
+                          .map(
+                            (entry) => FlSpot(
+                              entry.key.toDouble(),
+                              entry.value.income,
+                            ),
+                          )
+                          .toList(),
+                      isCurved: false,
+                      color: const Color(0xFF33CC33),
+                      barWidth: 2.5,
+                      dotData: const FlDotData(show: true),
+                    ),
+                    LineChartBarData(
+                      spots: data
+                          .asMap()
+                          .entries
+                          .map(
+                            (entry) => FlSpot(
+                              entry.key.toDouble(),
+                              entry.value.expense,
+                            ),
+                          )
+                          .toList(),
+                      isCurved: false,
+                      color: const Color(0xFFFC7520),
+                      barWidth: 2.5,
+                      dotData: const FlDotData(show: true),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -634,6 +767,110 @@ class _EmptyCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _PieLegend extends StatelessWidget {
+  const _PieLegend({
+    required this.entries,
+    required this.colors,
+    required this.total,
+  });
+
+  final List<MapEntry<String, double>> entries;
+  final List<Color> colors;
+  final double total;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: entries.asMap().entries.map((entry) {
+        final index = entry.key;
+        final item = entry.value;
+        final percent = total == 0 ? 0 : (item.value / total) * 100;
+        final color = colors[index % colors.length];
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(child: Text(item.key)),
+              Text(
+                '${_formatMoney(item.value)}  (${percent.toStringAsFixed(0)}%)',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _ChartLegend extends StatelessWidget {
+  const _ChartLegend({
+    required this.items,
+    required this.note,
+  });
+
+  final List<_LegendItem> items;
+  final String note;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: items
+              .map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: item.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        item.label,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          note,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LegendItem {
+  const _LegendItem({required this.label, required this.color});
+
+  final String label;
+  final Color color;
 }
 
 String _formatMoney(double value) {
