@@ -41,6 +41,73 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _openResetPassword(AuthController auth) async {
+    final controller = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+    final formKey = GlobalKey<FormState>();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        return AlertDialog(
+          title: const Text('Reinitialiser le mot de passe'),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: controller,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                filled: true,
+                fillColor: scheme.surfaceContainerHighest,
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Entrez votre email';
+                }
+                if (!value.contains('@')) {
+                  return 'Email invalide';
+                }
+                return null;
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                try {
+                  await auth.sendPasswordResetEmail(controller.text);
+                  if (!mounted) return;
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Email de reinitialisation envoye.'),
+                    ),
+                  );
+                } catch (_) {
+                  if (!mounted) return;
+                  final message = auth.errorMessage ??
+                      'Impossible d\'envoyer l\'email.';
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(message)),
+                  );
+                }
+              },
+              child: const Text('Envoyer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const brandGreen = Color(0xFF33CC33);
@@ -216,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: () {},
+                              onPressed: () => _openResetPassword(auth),
                               child: Text(
                                 'Mot de passe oublié ?',
                                 style: TextStyle(color: scheme.onSurfaceVariant),

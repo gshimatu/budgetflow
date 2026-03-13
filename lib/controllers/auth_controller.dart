@@ -132,6 +132,21 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  Future<void> sendPasswordResetEmail(String email) async {
+    setError(null);
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: email.trim(),
+      );
+    } on FirebaseAuthException catch (e) {
+      setError(_mapAuthError(e.code));
+      rethrow;
+    } catch (_) {
+      setError('Impossible d\'envoyer l\'email de reinitialisation.');
+      rethrow;
+    }
+  }
+
   String _mapAuthError(String code) {
     switch (code) {
       case 'invalid-email':
