@@ -42,6 +42,14 @@ class AdminDashboard extends StatelessWidget {
               icon: Icons.people_outline,
               onTap: () => Navigator.pushNamed(context, AppRoutes.adminUsers),
             ),
+            const SizedBox(height: 12),
+            _AdminTile(
+              title: 'Commentaires',
+              subtitle: 'Bugs et suggestions',
+              icon: Icons.chat_bubble_outline,
+              onTap: () =>
+                  Navigator.pushNamed(context, AppRoutes.adminFeedbacks),
+            ),
           ],
         ),
       ),

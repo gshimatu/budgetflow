@@ -211,6 +211,18 @@ class FirestoreService {
     });
   }
 
+  Stream<List<Map<String, dynamic>>> watchFeedbacks() {
+    return _db
+        .collection('feedbacks')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => {'id': doc.id, ...doc.data()})
+              .toList(),
+        );
+  }
+
   Future<Map<String, dynamic>> getGlobalStats() async {
     final usersCount = await _db.collection('users').count().get();
     final transactionsCount = await _db

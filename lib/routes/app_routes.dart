@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../views/admin/admin_dashboard.dart';
+import '../views/admin/feedbacks_screen.dart';
 import '../views/admin/global_stats_screen.dart';
 import '../views/admin/manage_categories_screen.dart';
 import '../views/admin/manage_users_screen.dart';
@@ -17,6 +18,7 @@ class AppRoutes {
   static const String adminCategories = '/admin/categories';
   static const String adminUsers = '/admin/users';
   static const String adminStats = '/admin/stats';
+  static const String adminFeedbacks = '/admin/feedbacks';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -34,6 +36,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const ManageUsersScreen());
       case adminStats:
         return MaterialPageRoute(builder: (_) => const GlobalStatsScreen());
+      case adminFeedbacks:
+        return MaterialPageRoute(builder: (_) => const FeedbacksScreen());
       default:
         return MaterialPageRoute(builder: (_) => const LoginScreen());
     }
