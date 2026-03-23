@@ -70,6 +70,11 @@ class _StatsScreenState extends State<StatsScreen> {
             _selectedYear!,
             _selectedMonth!,
           );
+          final dailyExpenseSeries = _buildDailyExpenseSeries(
+            transactions,
+            _selectedYear!,
+            _selectedMonth!,
+          );
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -98,9 +103,9 @@ class _StatsScreenState extends State<StatsScreen> {
                 const SizedBox(height: 12),
                 _MonthlyChartCard(data: monthlySeries),
                 const SizedBox(height: 20),
-                _SectionTitle(title: 'Tendance (polygone)'),
+                _SectionTitle(title: 'Tendance (polygone) - Depenses journaliere'),
                 const SizedBox(height: 12),
-                _PolygonChartCard(data: monthlySeries),
+                _DailyTrendChartCard(data: dailyExpenseSeries),
               ],
             ),
           );
@@ -491,6 +496,42 @@ class _PieChartCard extends StatelessWidget {
   }
 }
 
+
+class _DailyPoint {
+  const _DailyPoint({
+    required this.label,
+    required this.expense,
+  });
+
+  final String label;
+  final double expense;
+}
+
+List<_DailyPoint> _buildDailyExpenseSeries(
+  List<TransactionModel> items,
+  int year,
+  int month,
+) {
+  final daysInMonth = DateTime(year, month + 1, 0).day;
+  final totals = List<double>.filled(daysInMonth, 0);
+
+  for (final item in items) {
+    if (_isIncome(item.type)) continue;
+    if (item.date.year == year && item.date.month == month) {
+      final index = item.date.day - 1;
+      totals[index] += item.amount;
+    }
+  }
+
+  return List.generate(
+    daysInMonth,
+    (index) => _DailyPoint(
+      label: (index + 1).toString(),
+      expense: totals[index],
+    ),
+  );
+}
+
 class _MonthlyPoint {
   const _MonthlyPoint({
     required this.label,
@@ -597,6 +638,108 @@ class _MonthlyChartCard extends StatelessWidget {
                       barsSpace: 6,
                     );
                   }).toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class _DailyTrendChartCard extends StatelessWidget {
+  const _DailyTrendChartCard({required this.data});
+
+  final List<_DailyPoint> data;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasData = data.any((item) => item.expense > 0);
+    if (!hasData) {
+      return const _EmptyCard(
+        message: 'Aucune depense pour ce mois.',
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        height: 260,
+        child: Column(
+          children: [
+            _ChartLegend(
+              items: const [
+                _LegendItem(label: 'Depenses', color: Color(0xFFFC7520)),
+              ],
+              note: 'Evolution quotidienne des depenses pour le mois selectionne.',
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: LineChart(
+                LineChartData(
+                  gridData: const FlGridData(show: false),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 5,
+                        getTitlesWidget: (value, meta) {
+                          final index = value.toInt();
+                          if (index < 0 || index >= data.length) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              data[index].label,
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: data
+                          .asMap()
+                          .entries
+                          .map(
+                            (entry) => FlSpot(
+                              entry.key.toDouble(),
+                              entry.value.expense,
+                            ),
+                          )
+                          .toList(),
+                      isCurved: false,
+                      color: const Color(0xFFFC7520),
+                      barWidth: 2.5,
+                      dotData: const FlDotData(show: true),
+                    ),
+                  ],
                 ),
               ),
             ),
