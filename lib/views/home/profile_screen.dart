@@ -873,9 +873,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           {};
                   final notifications = prefs['notifications'] as bool? ?? true;
                   final weeklyReport = prefs['weeklyReport'] as bool? ?? false;
+                  final currency = prefs['currency'] as String? ?? 'CDF';
                   return _PreferencesCard(
                     notifications: notifications,
                     weeklyReport: weeklyReport,
+                    currency: currency,
                     onToggleNotifications: (value) {
                       FirestoreService().updateUserPreferences(
                         user.uid,
@@ -886,6 +888,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       FirestoreService().updateUserPreferences(
                         user.uid,
                         weeklyReport: value,
+                      );
+                    },
+                    onCurrencyChanged: (value) async {
+                      await FirestoreService().updateUserCurrency(
+                        user.uid,
+                        value,
                       );
                     },
                   );
@@ -900,6 +908,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       (data['preferences'] as Map?)?.cast<String, dynamic>() ??
                           {};
                   final weeklyReport = prefs['weeklyReport'] as bool? ?? false;
+                  final currency = prefs['currency'] as String? ?? 'CDF';
                   if (!weeklyReport) {
                     return const SizedBox.shrink();
                   }
@@ -908,7 +917,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       _SectionTitle(title: 'Résumé hebdomadaire'),
                       const SizedBox(height: 12),
-                      _WeeklyReportCard(uid: user.uid),
+                      _WeeklyReportCard(uid: user.uid, currency: currency),
                       const SizedBox(height: 20),
                     ],
                   );
@@ -1030,14 +1039,18 @@ class _PreferencesCard extends StatefulWidget {
   const _PreferencesCard({
     required this.notifications,
     required this.weeklyReport,
+    required this.currency,
     required this.onToggleNotifications,
     required this.onToggleWeeklyReport,
+    required this.onCurrencyChanged,
   });
 
   final bool notifications;
   final bool weeklyReport;
+  final String currency;
   final ValueChanged<bool> onToggleNotifications;
   final ValueChanged<bool> onToggleWeeklyReport;
+  final Future<void> Function(String) onCurrencyChanged;
 
   @override
   State<_PreferencesCard> createState() => _PreferencesCardState();
@@ -1046,7 +1059,12 @@ class _PreferencesCard extends StatefulWidget {
 class _PreferencesCardState extends State<_PreferencesCard> {
   bool _notifications = true;
   bool _weeklyReport = false;
+  String _currency = 'CDF';
+  String _pendingCurrency = 'CDF';
   bool _initialized = false;
+  bool _savingCurrency = false;
+
+  final _currencies = const ['CDF', 'USD', 'EUR', 'GBP', 'ZAR', 'NGN'];
 
   @override
   void didUpdateWidget(covariant _PreferencesCard oldWidget) {
@@ -1057,6 +1075,10 @@ class _PreferencesCardState extends State<_PreferencesCard> {
     if (oldWidget.weeklyReport != widget.weeklyReport) {
       _weeklyReport = widget.weeklyReport;
     }
+    if (oldWidget.currency != widget.currency) {
+      _currency = widget.currency;
+      _pendingCurrency = widget.currency;
+    }
   }
 
   @override
@@ -1064,6 +1086,8 @@ class _PreferencesCardState extends State<_PreferencesCard> {
     if (!_initialized) {
       _notifications = widget.notifications;
       _weeklyReport = widget.weeklyReport;
+      _currency = widget.currency;
+      _pendingCurrency = widget.currency;
       _initialized = true;
     }
     return Container(
@@ -1103,6 +1127,84 @@ class _PreferencesCardState extends State<_PreferencesCard> {
             },
           ),
           const Divider(height: 1),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Devise par defaut',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _pendingCurrency,
+                items: _currencies
+                    .map(
+                      (code) => DropdownMenuItem(
+                        value: code,
+                        child: Text(code),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => _pendingCurrency = value);
+                },
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.currency_exchange),
+                  filled: true,
+                  fillColor:
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: (_pendingCurrency == _currency || _savingCurrency)
+                      ? null
+                      : () async {
+                          setState(() => _savingCurrency = true);
+                          try {
+                            await widget.onCurrencyChanged(_pendingCurrency);
+                            if (!mounted) return;
+                            setState(() {
+                              _currency = _pendingCurrency;
+                              _savingCurrency = false;
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Devise mise a jour.'),
+                              ),
+                            );
+                          } catch (_) {
+                            if (!mounted) return;
+                            setState(() => _savingCurrency = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Mise a jour impossible.'),
+                              ),
+                            );
+                          }
+                        },
+                  child: _savingCurrency
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Valider la devise'),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 1),
           Consumer<ThemeController>(
             builder: (context, themeController, _) {
               return SwitchListTile(
@@ -1126,9 +1228,10 @@ class _PreferencesCardState extends State<_PreferencesCard> {
 }
 
 class _WeeklyReportCard extends StatelessWidget {
-  const _WeeklyReportCard({required this.uid});
+  const _WeeklyReportCard({required this.uid, required this.currency});
 
   final String uid;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -1191,13 +1294,13 @@ class _WeeklyReportCard extends StatelessWidget {
               const SizedBox(height: 12),
               _WeeklyLine(
                 label: 'Revenus',
-                value: _formatMoney(income),
+                value: _formatMoney(income, currency),
                 color: const Color(0xFF16A34A),
               ),
               const SizedBox(height: 6),
               _WeeklyLine(
                 label: 'Dépenses',
-                value: _formatMoney(expense),
+                value: _formatMoney(expense, currency),
                 color: const Color(0xFFEF4444),
               ),
               const SizedBox(height: 10),
@@ -1257,8 +1360,8 @@ bool _isIncome(String type) {
   return value.contains('revenu') || value == 'income';
 }
 
-String _formatMoney(double value) {
+String _formatMoney(double value, String currency) {
   final formatter = NumberFormat.decimalPattern();
-  return '${formatter.format(value.round())} CDF';
+  return '${formatter.format(value.round())} $currency';
 }
 

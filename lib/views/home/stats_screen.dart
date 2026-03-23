@@ -41,9 +41,16 @@ class _StatsScreenState extends State<StatsScreen> {
     return Scaffold(
       backgroundColor: scheme.surface,
       appBar: AppBar(title: const Text('Statistiques')),
-      body: StreamBuilder<List<TransactionModel>>(
-        stream: FirestoreService().watchTransactions(user.uid),
-        builder: (context, snapshot) {
+      body: StreamBuilder<Map<String, dynamic>>(
+        stream: FirestoreService().watchUserProfile(user.uid),
+        builder: (context, profileSnapshot) {
+          final profile = profileSnapshot.data ?? {};
+          final prefs =
+              (profile['preferences'] as Map?)?.cast<String, dynamic>() ?? {};
+          final currency = prefs['currency'] as String? ?? 'CDF';
+          return StreamBuilder<List<TransactionModel>>(
+            stream: FirestoreService().watchTransactions(user.uid),
+            builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -93,11 +100,11 @@ class _StatsScreenState extends State<StatsScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                _SummaryRow(summary: summary),
+                _SummaryRow(summary: summary, currency: currency),
                 const SizedBox(height: 20),
                 _SectionTitle(title: 'Répartition des dépenses'),
                 const SizedBox(height: 12),
-                _PieChartCard(data: expensesByCategory),
+                _PieChartCard(data: expensesByCategory, currency: currency),
                 const SizedBox(height: 20),
                 _SectionTitle(title: 'Évolution mensuelle'),
                 const SizedBox(height: 12),
@@ -109,6 +116,8 @@ class _StatsScreenState extends State<StatsScreen> {
               ],
             ),
           );
+        },
+      );
         },
       ),
     );
@@ -317,9 +326,10 @@ class _DropdownCard<T> extends StatelessWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.summary});
+  const _SummaryRow({required this.summary, required this.currency});
 
   final _SummaryData summary;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -328,7 +338,7 @@ class _SummaryRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             title: 'Revenus',
-            value: _formatMoney(summary.totalIncome),
+            value: _formatMoney(summary.totalIncome, currency),
             color: const Color(0xFF33CC33),
             icon: Icons.trending_up,
           ),
@@ -337,7 +347,7 @@ class _SummaryRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             title: 'Dépenses',
-            value: _formatMoney(summary.totalExpense),
+            value: _formatMoney(summary.totalExpense, currency),
             color: const Color(0xFFFC7520),
             icon: Icons.trending_down,
           ),
@@ -346,7 +356,7 @@ class _SummaryRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             title: 'Solde',
-            value: _formatMoney(summary.balance),
+            value: _formatMoney(summary.balance, currency),
             color: const Color(0xFF0BC1DE),
             icon: Icons.account_balance_wallet,
           ),
@@ -418,9 +428,10 @@ class _StatCard extends StatelessWidget {
 }
 
 class _PieChartCard extends StatelessWidget {
-  const _PieChartCard({required this.data});
+  const _PieChartCard({required this.data, required this.currency});
 
   final Map<String, double> data;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -489,6 +500,7 @@ class _PieChartCard extends StatelessWidget {
             entries: entries,
             colors: colors,
             total: total,
+            currency: currency,
           ),
         ],
       ),
@@ -917,11 +929,13 @@ class _PieLegend extends StatelessWidget {
     required this.entries,
     required this.colors,
     required this.total,
+    required this.currency,
   });
 
   final List<MapEntry<String, double>> entries;
   final List<Color> colors;
   final double total;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -946,7 +960,7 @@ class _PieLegend extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(child: Text(item.key)),
               Text(
-                '${_formatMoney(item.value)}  (${percent.toStringAsFixed(0)}%)',
+                '${_formatMoney(item.value, currency)}  (${percent.toStringAsFixed(0)}%)',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -1016,8 +1030,8 @@ class _LegendItem {
   final Color color;
 }
 
-String _formatMoney(double value) {
+String _formatMoney(double value, String currency) {
   final formatter = NumberFormat.decimalPattern();
-  return '${formatter.format(value.round())} CDF';
+  return '${formatter.format(value.round())} $currency';
 }
 

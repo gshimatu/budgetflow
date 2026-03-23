@@ -60,74 +60,90 @@ class HomeScreen extends StatelessWidget {
             if (user == null)
               const Center(child: Text('Connectez-vous pour voir vos données.'))
             else
-              StreamBuilder<List<TransactionModel>>(
-                stream: FirestoreService().watchTransactions(user.uid),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final transactions = snapshot.data ?? [];
-                  final summary = _buildSummary(transactions);
-                  final recent = transactions.take(3).toList();
+              StreamBuilder<Map<String, dynamic>>(
+                stream: FirestoreService().watchUserProfile(user.uid),
+                builder: (context, profileSnapshot) {
+                  final profile = profileSnapshot.data ?? {};
+                  final prefs =
+                      (profile['preferences'] as Map?)?.cast<String, dynamic>() ??
+                          {};
+                  final currency = prefs['currency'] as String? ?? 'CDF';
+                  return StreamBuilder<List<TransactionModel>>(
+                    stream: FirestoreService().watchTransactions(user.uid),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final transactions = snapshot.data ?? [];
+                      final summary = _buildSummary(transactions);
+                      final recent = transactions.take(3).toList();
 
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _HeaderSection(
-                          brandOrange: brandOrange,
-                          brandGreen: brandGreen,
-                        ),
-                        const SizedBox(height: 20),
-                        _BalanceCard(
-                          brandGreen: brandGreen,
-                          brandCyan: brandCyan,
-                          balance: summary.balance,
-                          income: summary.totalIncome,
-                          expense: summary.totalExpense,
-                        ),
-                        const SizedBox(height: 20),
-                        _QuickActions(
-                          brandOrange: brandOrange,
-                          onAddExpense: () async {
-                            if (user == null) return;
-                            await showTransactionForm(
-                              context,
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _HeaderSection(
+                              brandOrange: brandOrange,
+                              brandGreen: brandGreen,
+                            ),
+                            const SizedBox(height: 20),
+                            _BalanceCard(
+                              brandGreen: brandGreen,
+                              brandCyan: brandCyan,
+                              balance: summary.balance,
+                              income: summary.totalIncome,
+                              expense: summary.totalExpense,
+                              currency: currency,
+                            ),
+                            const SizedBox(height: 20),
+                            _QuickActions(
+                              brandOrange: brandOrange,
+                              onAddExpense: () async {
+                                if (user == null) return;
+                                await showTransactionForm(
+                                  context,
+                                  uid: user.uid,
+                                  initialType: 'expense',
+                                  currency: currency,
+                                );
+                              },
+                              onAddIncome: () async {
+                                if (user == null) return;
+                                await showTransactionForm(
+                                  context,
+                                  uid: user.uid,
+                                  initialType: 'income',
+                                  currency: currency,
+                                );
+                              },
+                              onConvert: () => _openConverter(context),
+                            ),
+                            const SizedBox(height: 20),
+                            _BudgetOverview(
+                              brandGreen: brandGreen,
                               uid: user.uid,
-                              initialType: 'expense',
-                            );
-                          },
-                          onAddIncome: () async {
-                            if (user == null) return;
-                            await showTransactionForm(
-                              context,
-                              uid: user.uid,
-                              initialType: 'income',
-                            );
-                          },
-                          onConvert: () => _openConverter(context),
+                              totalExpense: summary.totalExpense,
+                              currency: currency,
+                            ),
+                            const SizedBox(height: 20),
+                            _InsightsRow(
+                              brandCyan: brandCyan,
+                              brandOrange: brandOrange,
+                              income: summary.totalIncome,
+                              expense: summary.totalExpense,
+                              currency: currency,
+                            ),
+                            const SizedBox(height: 20),
+                            _RecentTransactions(
+                              transactions: recent,
+                              onViewAll: onViewAllTransactions,
+                              currency: currency,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 20),
-                        _BudgetOverview(
-                          brandGreen: brandGreen,
-                          uid: user.uid,
-                          totalExpense: summary.totalExpense,
-                        ),
-                        const SizedBox(height: 20),
-                        _InsightsRow(
-                          brandCyan: brandCyan,
-                          brandOrange: brandOrange,
-                          income: summary.totalIncome,
-                          expense: summary.totalExpense,
-                        ),
-                        const SizedBox(height: 20),
-                        _RecentTransactions(
-                          transactions: recent,
-                          onViewAll: onViewAllTransactions,
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               ),
@@ -391,9 +407,9 @@ bool _isIncome(String type) {
   return value.contains('revenu') || value == 'income';
 }
 
-String _formatMoney(double value) {
+String _formatMoney(double value, String currency) {
   final formatter = NumberFormat.decimalPattern();
-  return '${formatter.format(value.round())} CDF';
+  return '${formatter.format(value.round())} $currency';
 }
 
 class _HeaderSection extends StatelessWidget {
@@ -476,6 +492,7 @@ class _BalanceCard extends StatelessWidget {
     required this.balance,
     required this.income,
     required this.expense,
+    required this.currency,
   });
 
   final Color brandGreen;
@@ -483,6 +500,7 @@ class _BalanceCard extends StatelessWidget {
   final double balance;
   final double income;
   final double expense;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -515,7 +533,7 @@ class _BalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            _formatMoney(balance),
+            _formatMoney(balance, currency),
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -527,11 +545,11 @@ class _BalanceCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _BalanceChip(
-                label: 'Revenus ${_formatMoney(income)}',
+                label: 'Revenus ${_formatMoney(income, currency)}',
                 icon: Icons.trending_up,
               ),
               _BalanceChip(
-                label: 'Dépenses ${_formatMoney(expense)}',
+                label: 'Dépenses ${_formatMoney(expense, currency)}',
                 icon: Icons.trending_down,
               ),
             ],
@@ -697,11 +715,13 @@ class _BudgetOverview extends StatefulWidget {
     required this.brandGreen,
     required this.uid,
     required this.totalExpense,
+    required this.currency,
   });
 
   final Color brandGreen;
   final String uid;
   final double totalExpense;
+  final String currency;
 
   @override
   State<_BudgetOverview> createState() => _BudgetOverviewState();
@@ -766,7 +786,7 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
                         keyboardType:
                             const TextInputType.numberWithOptions(decimal: true),
                         decoration: InputDecoration(
-                          labelText: 'Montant (CDF)',
+                          labelText: 'Montant (${widget.currency})',
                           prefixIcon: const Icon(Icons.flag_outlined),
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest,
@@ -904,7 +924,7 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
                           fontWeight: FontWeight.w700,
                         ),
                   ),
-                      Row(
+                  Row(
                     children: [
                       Text(
                         goal <= 0 ? 'A definir' : '$percent%',
@@ -939,7 +959,7 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
               Text(
                 goal <= 0
                     ? 'Definis ton objectif pour ce mois'
-                    : 'Budget restant : ${_formatMoney(remaining)}',
+                    : 'Budget restant : ${_formatMoney(remaining, widget.currency)}',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -958,12 +978,14 @@ class _InsightsRow extends StatelessWidget {
     required this.brandOrange,
     required this.income,
     required this.expense,
+    required this.currency,
   });
 
   final Color brandCyan;
   final Color brandOrange;
   final double income;
   final double expense;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -972,7 +994,7 @@ class _InsightsRow extends StatelessWidget {
         Expanded(
           child: _InsightCard(
             title: 'Dépenses du mois',
-            value: _formatMoney(expense),
+            value: _formatMoney(expense, currency),
             color: brandOrange,
             icon: Icons.shopping_bag_outlined,
           ),
@@ -981,7 +1003,7 @@ class _InsightsRow extends StatelessWidget {
         Expanded(
           child: _InsightCard(
             title: 'Revenus du mois',
-            value: _formatMoney(income),
+            value: _formatMoney(income, currency),
             color: brandCyan,
             icon: Icons.account_balance_wallet_outlined,
           ),
@@ -1055,10 +1077,12 @@ class _InsightCard extends StatelessWidget {
 class _RecentTransactions extends StatelessWidget {
   const _RecentTransactions({
     required this.transactions,
+    required this.currency,
     this.onViewAll,
   });
 
   final List<TransactionModel> transactions;
+  final String currency;
   final VoidCallback? onViewAll;
 
   @override
@@ -1107,16 +1131,19 @@ class _RecentTransactions extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        ...transactions.map((tx) => _TransactionTile(tx: tx)),
+        ...transactions.map(
+          (tx) => _TransactionTile(tx: tx, currency: currency),
+        ),
       ],
     );
   }
 }
 
 class _TransactionTile extends StatelessWidget {
-  const _TransactionTile({required this.tx});
+  const _TransactionTile({required this.tx, required this.currency});
 
   final TransactionModel tx;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -1179,7 +1206,7 @@ class _TransactionTile extends StatelessWidget {
             ),
           ),
           Text(
-            '${isIncome ? '+' : '-'} ${_formatMoney(tx.amount)}',
+            '${isIncome ? '+' : '-'} ${_formatMoney(tx.amount, currency)}',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: amountColor,

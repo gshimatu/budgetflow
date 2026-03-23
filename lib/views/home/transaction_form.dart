@@ -10,6 +10,7 @@ Future<void> showTransactionForm(
   required String uid,
   String initialType = 'expense',
   TransactionModel? existing,
+  String currency = 'CDF',
 }) async {
   final formKey = GlobalKey<FormState>();
   final amountController =
@@ -101,7 +102,7 @@ Future<void> showTransactionForm(
                                 labelText: 'Montant',
                                 prefixIcon:
                                     const Icon(Icons.payments_outlined),
-                                suffixText: 'CDF',
+                                suffixText: currency,
                                 filled: true,
                                 fillColor: Theme.of(context)
                                     .colorScheme

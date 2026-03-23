@@ -25,12 +25,16 @@ class FirestoreService {
     if (doc.exists) {
       // Vérifie que l'utilisateur existant a les préférences
       final data = doc.data() ?? {};
-      if (data['preferences'] == null) {
+      final prefs = (data['preferences'] as Map?)?.cast<String, dynamic>();
+      final needsPrefs = prefs == null;
+      final needsCurrency = prefs != null && prefs['currency'] == null;
+      if (needsPrefs || needsCurrency) {
         await _db.collection('users').doc(uid).set({
           'preferences': {
-            'weeklyReport': false,
-            'notifications': true,
-            'monthlyGoal': 0,
+            'weeklyReport': prefs?['weeklyReport'] ?? false,
+            'notifications': prefs?['notifications'] ?? true,
+            'monthlyGoal': prefs?['monthlyGoal'] ?? 0,
+            'currency': prefs?['currency'] ?? 'CDF',
           },
         }, SetOptions(merge: true));
       }
@@ -46,8 +50,17 @@ class FirestoreService {
         'weeklyReport': false,
         'notifications': true,
         'monthlyGoal': 0,
+        'currency': 'CDF',
       },
     });
+  }
+
+  Future<void> updateUserCurrency(String uid, String currency) async {
+    await _db.collection('users').doc(uid).set({
+      'preferences': {
+        'currency': currency,
+      },
+    }, SetOptions(merge: true));
   }
 
   Future<void> updateUserPreferences(
@@ -55,6 +68,7 @@ class FirestoreService {
     bool? weeklyReport,
     bool? notifications,
     double? monthlyGoal,
+    String? currency,
   }) async {
     final updates = <String, dynamic>{};
     if (weeklyReport != null) {
@@ -66,16 +80,28 @@ class FirestoreService {
     if (monthlyGoal != null) {
       updates['preferences.monthlyGoal'] = monthlyGoal;
     }
+    if (currency != null) {
+      updates['preferences.currency'] = currency;
+    }
     if (updates.isEmpty) return;
 
-    // S'assure que l'objet preferences existe
+    // S'assure que l'objet preferences existe sans conflit de champs
     final doc = await _db.collection('users').doc(uid).get();
     if (doc.exists && doc.data()?['preferences'] == null) {
-      updates['preferences'] = {
+      final basePrefs = <String, dynamic>{
         'weeklyReport': false,
         'notifications': true,
         'monthlyGoal': 0,
+        'currency': 'CDF',
       };
+      if (currency != null) {
+        basePrefs['currency'] = currency;
+      }
+      await _db
+          .collection('users')
+          .doc(uid)
+          .set({'preferences': basePrefs}, SetOptions(merge: true));
+      return;
     }
 
     await _db

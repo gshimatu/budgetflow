@@ -16,9 +16,10 @@ class TransactionsScreen extends StatefulWidget {
 class _TransactionsScreenState extends State<TransactionsScreen> {
   _DateFilter _filter = _DateFilter.all;
   DateTime? _customDay;
+  String _currencyForForm = 'CDF';
 
   Future<void> _openAddTransaction(BuildContext context, String uid) async {
-    await showTransactionForm(context, uid: uid);
+    await showTransactionForm(context, uid: uid, currency: _currencyForForm);
   }
 
   Future<void> _openEditTransaction(
@@ -26,7 +27,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     String uid,
     TransactionModel existing,
   ) async {
-    await showTransactionForm(context, uid: uid, existing: existing);
+    await showTransactionForm(context, uid: uid, existing: existing, currency: _currencyForForm);
   }
 
   @override
@@ -57,59 +58,70 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           ),
         ],
       ),
-      body: StreamBuilder<List<TransactionModel>>(
-        stream: FirestoreService().watchTransactions(user.uid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final transactions = snapshot.data ?? [];
-          if (transactions.isEmpty) {
-            return const Center(
-              child: Text('Aucune transaction enregistree.'),
-            );
-          }
+      body: StreamBuilder<Map<String, dynamic>>(
+        stream: FirestoreService().watchUserProfile(user.uid),
+        builder: (context, profileSnapshot) {
+          final profile = profileSnapshot.data ?? {};
+          final prefs =
+              (profile['preferences'] as Map?)?.cast<String, dynamic>() ?? {};
+          final currency = prefs['currency'] as String? ?? 'CDF';
+          _currencyForForm = currency;
+          return StreamBuilder<List<TransactionModel>>(
+            stream: FirestoreService().watchTransactions(user.uid),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final transactions = snapshot.data ?? [];
+              if (transactions.isEmpty) {
+                return const Center(
+                  child: Text('Aucune transaction enregistree.'),
+                );
+              }
 
-          final filteredTransactions =
-              _applyFilter(transactions, _filter, _customDay);
-          if (filteredTransactions.isEmpty) {
-            return Center(
-              child: Text(_emptyMessageForFilter(_filter)),
-            );
-          }
+              final filteredTransactions =
+                  _applyFilter(transactions, _filter, _customDay);
+              if (filteredTransactions.isEmpty) {
+                return Center(
+                  child: Text(_emptyMessageForFilter(_filter)),
+                );
+              }
 
-          final summary = _buildSummary(filteredTransactions);
+              final summary = _buildSummary(filteredTransactions);
 
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            children: [
-              _SummaryCard(summary: summary),
-              const SizedBox(height: 12),
-              _FilterChips(
-                selected: _filter,
-                onSelected: (value) async {
-                  if (value == _DateFilter.day) {
-                    final picked = await _pickDay(context);
-                    if (picked == null) return;
-                    setState(() {
-                      _customDay = picked;
-                      _filter = value;
-                    });
-                    return;
-                  }
-                  setState(() => _filter = value);
-                },
-                selectedDay: _customDay,
-              ),
-              const SizedBox(height: 16),
-              ...filteredTransactions.map(
-                (tx) => _TransactionTile(
-                  tx: tx,
-                  onEdit: () => _openEditTransaction(context, user.uid, tx),
-                  onDelete: () => _confirmDelete(context, user.uid, tx),
-                ),
-              ),
-            ],
+              return ListView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                children: [
+                  _SummaryCard(summary: summary, currency: currency),
+                  const SizedBox(height: 12),
+                  _FilterChips(
+                    selected: _filter,
+                    onSelected: (value) async {
+                      if (value == _DateFilter.day) {
+                        final picked = await _pickDay(context);
+                        if (picked == null) return;
+                        setState(() {
+                          _customDay = picked;
+                          _filter = value;
+                        });
+                        return;
+                      }
+                      setState(() => _filter = value);
+                    },
+                    selectedDay: _customDay,
+                  ),
+                  const SizedBox(height: 16),
+                  ...filteredTransactions.map(
+                    (tx) => _TransactionTile(
+                      tx: tx,
+                      currency: currency,
+                      onEdit: () => _openEditTransaction(context, user.uid, tx),
+                      onDelete: () => _confirmDelete(context, user.uid, tx),
+                    ),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -352,9 +364,10 @@ bool _isIncome(String type) {
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.summary});
+  const _SummaryCard({required this.summary, required this.currency});
 
   final _SummaryData summary;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -380,7 +393,7 @@ class _SummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            _formatMoney(summary.balance),
+            _formatMoney(summary.balance, currency),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -392,7 +405,7 @@ class _SummaryCard extends StatelessWidget {
               Expanded(
                 child: _MiniStat(
                   label: 'Revenus',
-                  value: _formatMoney(summary.totalIncome),
+                  value: _formatMoney(summary.totalIncome, currency),
                   color: Colors.white,
                 ),
               ),
@@ -400,7 +413,7 @@ class _SummaryCard extends StatelessWidget {
               Expanded(
                 child: _MiniStat(
                   label: 'Depenses',
-                  value: _formatMoney(summary.totalExpense),
+                  value: _formatMoney(summary.totalExpense, currency),
                   color: Colors.white,
                 ),
               ),
@@ -457,11 +470,13 @@ class _MiniStat extends StatelessWidget {
 class _TransactionTile extends StatelessWidget {
   const _TransactionTile({
     required this.tx,
+    required this.currency,
     required this.onEdit,
     required this.onDelete,
   });
 
   final TransactionModel tx;
+  final String currency;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -541,7 +556,7 @@ class _TransactionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${isIncome ? '+' : '-'} ${_formatMoney(tx.amount)}',
+                  '${isIncome ? '+' : '-'} ${_formatMoney(tx.amount, currency)}',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: amountColor,
                         fontWeight: FontWeight.w700,
@@ -563,7 +578,7 @@ class _TransactionTile extends StatelessWidget {
   }
 }
 
-String _formatMoney(double value) {
+String _formatMoney(double value, String currency) {
   final formatter = NumberFormat.decimalPattern();
-  return '${formatter.format(value.round())} CDF';
+  return '${formatter.format(value.round())} $currency';
 }
