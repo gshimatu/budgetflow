@@ -318,6 +318,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirmController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     bool saving = false;
+    bool obscureOld = true;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
 
     await showModalBottomSheet(
       context: context,
@@ -363,10 +366,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: oldController,
-                        obscureText: true,
+                        obscureText: obscureOld,
                         decoration: InputDecoration(
                           labelText: 'Ancien mot de passe',
                           prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            onPressed: () =>
+                                setState(() => obscureOld = !obscureOld),
+                            icon: Icon(
+                              obscureOld
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                          ),
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest,
                           border: OutlineInputBorder(
@@ -384,10 +396,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: newController,
-                        obscureText: true,
+                        obscureText: obscureNew,
                         decoration: InputDecoration(
                           labelText: 'Nouveau mot de passe',
                           prefixIcon: const Icon(Icons.lock_reset),
+                          suffixIcon: IconButton(
+                            onPressed: () =>
+                                setState(() => obscureNew = !obscureNew),
+                            icon: Icon(
+                              obscureNew
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                          ),
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest,
                           border: OutlineInputBorder(
@@ -408,10 +429,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: confirmController,
-                        obscureText: true,
+                        obscureText: obscureConfirm,
                         decoration: InputDecoration(
                           labelText: 'Confirmer le mot de passe',
                           prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            onPressed: () => setState(
+                              () => obscureConfirm = !obscureConfirm,
+                            ),
+                            icon: Icon(
+                              obscureConfirm
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                          ),
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest,
                           border: OutlineInputBorder(
@@ -1077,3 +1108,4 @@ String _formatMoney(double value) {
   final formatter = NumberFormat.decimalPattern();
   return '${formatter.format(value.round())} CDF';
 }
+

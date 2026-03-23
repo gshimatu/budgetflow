@@ -17,6 +17,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
   @override
   void dispose() {
@@ -190,7 +192,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(height: 14),
                           TextFormField(
                             controller: _passwordController,
-                            obscureText: true,
+                            obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               labelText: 'Mot de passe',
                               prefixIcon: const Icon(Icons.lock_outline),
@@ -214,7 +216,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(height: 14),
                           TextFormField(
                             controller: _confirmController,
-                            obscureText: true,
+                            obscureText: _obscureConfirm,
                             decoration: InputDecoration(
                               labelText: 'Confirmer le mot de passe',
                               prefixIcon: const Icon(Icons.lock_outline),
@@ -332,3 +334,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
+
+
+
