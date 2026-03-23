@@ -397,7 +397,7 @@ class _StatCard extends StatelessWidget {
             style: Theme.of(context)
                 .textTheme
                 .labelMedium
-                ?.copyWith(color: Colors.black54),
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 4),
           Text(
@@ -877,3 +877,4 @@ String _formatMoney(double value) {
   final formatter = NumberFormat.decimalPattern();
   return '${formatter.format(value.round())} CDF';
 }
+
