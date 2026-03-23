@@ -119,6 +119,32 @@ class FirestoreService {
         .update(transaction.toMap());
   }
 
+  Future<void> resetUserData(String uid) async {
+    await _deleteCollection(
+      _db.collection('users').doc(uid).collection('transactions'),
+    );
+    await _deleteCollection(
+      _db.collection('users').doc(uid).collection('userCategories'),
+    );
+    await _db.collection('users').doc(uid).set({
+      'preferences': {
+        'monthlyGoal': 0,
+      },
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> _deleteCollection(CollectionReference collection) async {
+    while (true) {
+      final snapshot = await collection.limit(500).get();
+      if (snapshot.docs.isEmpty) break;
+      final batch = _db.batch();
+      for (final doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    }
+  }
+
   Future<void> deleteTransaction(String uid, String transactionId) async {
     await _db
         .collection('users')

@@ -80,6 +80,145 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+
+  Future<void> _resetUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _showError('Utilisateur non connecte.');
+      return;
+    }
+
+    final hasPasswordProvider = user.providerData
+        .any((provider) => provider.providerId == 'password');
+    if (!hasPasswordProvider) {
+      _showError(
+        'Connexion via un fournisseur externe. Utilisez ce fournisseur pour reinitialiser votre compte.',
+      );
+      return;
+    }
+
+    final passwordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool obscure = true;
+    bool saving = false;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Reinitialiser les donnees'),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Cette action supprime toutes vos transactions et categories personnalisees.\nConfirmez avec votre mot de passe.',
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: passwordController,
+                      obscureText: obscure,
+                      decoration: InputDecoration(
+                        labelText: 'Mot de passe',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          onPressed: () =>
+                              setState(() => obscure = !obscure),
+                          icon: Icon(
+                            obscure
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: scheme.surfaceContainerHighest,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Veuillez saisir votre mot de passe';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: saving ? null : () => Navigator.pop(context, false),
+                  child: const Text('Annuler'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFEF4444),
+                  ),
+                  onPressed: saving
+                      ? null
+                      : () async {
+                          if (!formKey.currentState!.validate()) {
+                            return;
+                          }
+                          setState(() => saving = true);
+                          try {
+                            final email = user.email;
+                            if (email == null) {
+                              throw FirebaseAuthException(
+                                code: 'invalid-email',
+                              );
+                            }
+                            final credential =
+                                EmailAuthProvider.credential(
+                              email: email,
+                              password: passwordController.text,
+                            );
+                            await user
+                                .reauthenticateWithCredential(credential);
+                            await FirestoreService().resetUserData(user.uid);
+                            if (!context.mounted) return;
+                            Navigator.pop(context, true);
+                          } on FirebaseAuthException catch (e) {
+                            _showError(_mapAuthError(e.code));
+                          } catch (_) {
+                            _showError('Reinitialisation impossible.');
+                          } finally {
+                            if (context.mounted) {
+                              setState(() => saving = false);
+                            }
+                          }
+                        },
+                  child: saving
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Reinitialiser'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Donnees reinitialisees.')),
+    );
+  }
+
   Future<void> _deleteAccount() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -797,6 +936,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       leading: const Icon(Icons.lock_reset),
                       title: const Text('Changer le mot de passe'),
                       onTap: _changePassword,
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.restart_alt,
+                          color: Color(0xFFFC7520)),
+                      title: const Text(
+                        'Reinitialiser mes donnees',
+                        style: TextStyle(color: Color(0xFFFC7520)),
+                      ),
+                      subtitle: const Text(
+                        'Supprime toutes les transactions et categories.',
+                      ),
+                      onTap: _resetUserData,
                     ),
                     const Divider(height: 1),
                     ListTile(
