@@ -28,13 +28,17 @@ class FirestoreService {
       final prefs = (data['preferences'] as Map?)?.cast<String, dynamic>();
       final needsPrefs = prefs == null;
       final needsCurrency = prefs != null && prefs['currency'] == null;
-      if (needsPrefs || needsCurrency) {
+      final needsBase = prefs != null && prefs['baseCurrency'] == null;
+      final needsRate = prefs != null && prefs['rate'] == null;
+      if (needsPrefs || needsCurrency || needsBase || needsRate) {
         await _db.collection('users').doc(uid).set({
           'preferences': {
             'weeklyReport': prefs?['weeklyReport'] ?? false,
             'notifications': prefs?['notifications'] ?? true,
             'monthlyGoal': prefs?['monthlyGoal'] ?? 0,
             'currency': prefs?['currency'] ?? 'CDF',
+            'baseCurrency': prefs?['baseCurrency'] ?? (prefs?['currency'] ?? 'CDF'),
+            'rate': (prefs?['rate'] as num?)?.toDouble() ?? 1.0,
           },
         }, SetOptions(merge: true));
       }
@@ -51,9 +55,27 @@ class FirestoreService {
         'notifications': true,
         'monthlyGoal': 0,
         'currency': 'CDF',
+        'baseCurrency': 'CDF',
+        'rate': 1.0,
       },
     });
   }
+
+    Future<void> convertUserCurrency({
+    required String uid,
+    required String baseCurrency,
+    required String to,
+    required double rate,
+  }) async {
+    await _db.collection('users').doc(uid).set({
+      'preferences': {
+        'currency': to,
+        'baseCurrency': baseCurrency,
+        'rate': rate,
+      },
+    }, SetOptions(merge: true));
+  }
+
 
   Future<void> updateUserCurrency(String uid, String currency) async {
     await _db.collection('users').doc(uid).set({
@@ -69,6 +91,8 @@ class FirestoreService {
     bool? notifications,
     double? monthlyGoal,
     String? currency,
+    String? baseCurrency,
+    double? rate,
   }) async {
     final updates = <String, dynamic>{};
     if (weeklyReport != null) {
@@ -83,6 +107,12 @@ class FirestoreService {
     if (currency != null) {
       updates['preferences.currency'] = currency;
     }
+    if (baseCurrency != null) {
+      updates['preferences.baseCurrency'] = baseCurrency;
+    }
+    if (rate != null) {
+      updates['preferences.rate'] = rate;
+    }
     if (updates.isEmpty) return;
 
     // S'assure que l'objet preferences existe sans conflit de champs
@@ -93,6 +123,8 @@ class FirestoreService {
         'notifications': true,
         'monthlyGoal': 0,
         'currency': 'CDF',
+        'baseCurrency': 'CDF',
+        'rate': 1.0,
       };
       if (currency != null) {
         basePrefs['currency'] = currency;

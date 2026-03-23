@@ -68,6 +68,7 @@ class HomeScreen extends StatelessWidget {
                       (profile['preferences'] as Map?)?.cast<String, dynamic>() ??
                           {};
                   final currency = prefs['currency'] as String? ?? 'CDF';
+                  final rate = (prefs['rate'] as num?)?.toDouble() ?? 1.0;
                   return StreamBuilder<List<TransactionModel>>(
                     stream: FirestoreService().watchTransactions(user.uid),
                     builder: (context, snapshot) {
@@ -95,6 +96,7 @@ class HomeScreen extends StatelessWidget {
                               income: summary.totalIncome,
                               expense: summary.totalExpense,
                               currency: currency,
+                              rate: rate,
                             ),
                             const SizedBox(height: 20),
                             _QuickActions(
@@ -106,6 +108,7 @@ class HomeScreen extends StatelessWidget {
                                   uid: user.uid,
                                   initialType: 'expense',
                                   currency: currency,
+                                  rate: rate,
                                 );
                               },
                               onAddIncome: () async {
@@ -115,6 +118,7 @@ class HomeScreen extends StatelessWidget {
                                   uid: user.uid,
                                   initialType: 'income',
                                   currency: currency,
+                                  rate: rate,
                                 );
                               },
                               onConvert: () => _openConverter(context),
@@ -125,6 +129,7 @@ class HomeScreen extends StatelessWidget {
                               uid: user.uid,
                               totalExpense: summary.totalExpense,
                               currency: currency,
+                              rate: rate,
                             ),
                             const SizedBox(height: 20),
                             _InsightsRow(
@@ -133,12 +138,14 @@ class HomeScreen extends StatelessWidget {
                               income: summary.totalIncome,
                               expense: summary.totalExpense,
                               currency: currency,
+                              rate: rate,
                             ),
                             const SizedBox(height: 20),
                             _RecentTransactions(
                               transactions: recent,
                               onViewAll: onViewAllTransactions,
                               currency: currency,
+                              rate: rate,
                             ),
                           ],
                         ),
@@ -407,9 +414,9 @@ bool _isIncome(String type) {
   return value.contains('revenu') || value == 'income';
 }
 
-String _formatMoney(double value, String currency) {
+String _formatMoney(double value, String currency, double rate) {
   final formatter = NumberFormat.decimalPattern();
-  return '${formatter.format(value.round())} $currency';
+  return '${formatter.format((value * rate).round())} $currency';
 }
 
 class _HeaderSection extends StatelessWidget {
@@ -493,6 +500,7 @@ class _BalanceCard extends StatelessWidget {
     required this.income,
     required this.expense,
     required this.currency,
+    required this.rate,
   });
 
   final Color brandGreen;
@@ -501,6 +509,7 @@ class _BalanceCard extends StatelessWidget {
   final double income;
   final double expense;
   final String currency;
+  final double rate;
 
   @override
   Widget build(BuildContext context) {
@@ -533,7 +542,7 @@ class _BalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            _formatMoney(balance, currency),
+            _formatMoney(balance, currency, rate),
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -545,11 +554,11 @@ class _BalanceCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _BalanceChip(
-                label: 'Revenus ${_formatMoney(income, currency)}',
+                label: 'Revenus ${_formatMoney(income, currency, rate)}',
                 icon: Icons.trending_up,
               ),
               _BalanceChip(
-                label: 'Dépenses ${_formatMoney(expense, currency)}',
+                label: 'Dépenses ${_formatMoney(expense, currency, rate)}',
                 icon: Icons.trending_down,
               ),
             ],
@@ -716,12 +725,14 @@ class _BudgetOverview extends StatefulWidget {
     required this.uid,
     required this.totalExpense,
     required this.currency,
+    required this.rate,
   });
 
   final Color brandGreen;
   final String uid;
   final double totalExpense;
   final String currency;
+  final double rate;
 
   @override
   State<_BudgetOverview> createState() => _BudgetOverviewState();
@@ -959,7 +970,7 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
               Text(
                 goal <= 0
                     ? 'Definis ton objectif pour ce mois'
-                    : 'Budget restant : ${_formatMoney(remaining, widget.currency)}',
+                    : 'Budget restant : ${_formatMoney(remaining, widget.currency, widget.rate)}',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -979,6 +990,7 @@ class _InsightsRow extends StatelessWidget {
     required this.income,
     required this.expense,
     required this.currency,
+    required this.rate,
   });
 
   final Color brandCyan;
@@ -986,6 +998,7 @@ class _InsightsRow extends StatelessWidget {
   final double income;
   final double expense;
   final String currency;
+  final double rate;
 
   @override
   Widget build(BuildContext context) {
@@ -994,7 +1007,7 @@ class _InsightsRow extends StatelessWidget {
         Expanded(
           child: _InsightCard(
             title: 'Dépenses du mois',
-            value: _formatMoney(expense, currency),
+            value: _formatMoney(expense, currency, rate),
             color: brandOrange,
             icon: Icons.shopping_bag_outlined,
           ),
@@ -1003,7 +1016,7 @@ class _InsightsRow extends StatelessWidget {
         Expanded(
           child: _InsightCard(
             title: 'Revenus du mois',
-            value: _formatMoney(income, currency),
+            value: _formatMoney(income, currency, rate),
             color: brandCyan,
             icon: Icons.account_balance_wallet_outlined,
           ),
@@ -1078,11 +1091,13 @@ class _RecentTransactions extends StatelessWidget {
   const _RecentTransactions({
     required this.transactions,
     required this.currency,
+    required this.rate,
     this.onViewAll,
   });
 
   final List<TransactionModel> transactions;
   final String currency;
+  final double rate;
   final VoidCallback? onViewAll;
 
   @override
@@ -1132,7 +1147,7 @@ class _RecentTransactions extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         ...transactions.map(
-          (tx) => _TransactionTile(tx: tx, currency: currency),
+          (tx) => _TransactionTile(tx: tx, currency: currency, rate: rate),
         ),
       ],
     );
@@ -1140,10 +1155,11 @@ class _RecentTransactions extends StatelessWidget {
 }
 
 class _TransactionTile extends StatelessWidget {
-  const _TransactionTile({required this.tx, required this.currency});
+  const _TransactionTile({required this.tx, required this.currency, required this.rate});
 
   final TransactionModel tx;
   final String currency;
+  final double rate;
 
   @override
   Widget build(BuildContext context) {
@@ -1206,7 +1222,7 @@ class _TransactionTile extends StatelessWidget {
             ),
           ),
           Text(
-            '${isIncome ? '+' : '-'} ${_formatMoney(tx.amount, currency)}',
+            '${isIncome ? '+' : '-'} ${_formatMoney(tx.amount, currency, rate)}',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: amountColor,

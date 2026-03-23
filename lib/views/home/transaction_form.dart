@@ -11,10 +11,14 @@ Future<void> showTransactionForm(
   String initialType = 'expense',
   TransactionModel? existing,
   String currency = 'CDF',
+  double rate = 1.0,
 }) async {
   final formKey = GlobalKey<FormState>();
-  final amountController =
-      TextEditingController(text: existing?.amount.toString());
+  final amountController = TextEditingController(
+      text: existing == null
+          ? null
+          : (existing.amount * rate).toStringAsFixed(2),
+    );
   final noteController = TextEditingController(text: existing?.note ?? '');
   DateTime selectedDate = existing?.date ?? DateTime.now();
   String type = existing?.type ?? initialType;
@@ -276,13 +280,16 @@ Future<void> showTransactionForm(
                                         .trim()
                                         .replaceAll(',', '.'),
                                   );
+                                  final baseAmount = rate == 0
+                                      ? amount
+                                      : amount / rate;
                                   final chosen = selectedCategory == 'Autre'
                                       ? (customCategory ?? '')
                                       : (selectedCategory ?? '');
                                   final categoryName = chosen.trim();
                                   final transaction = TransactionModel(
                                     id: existing?.id ?? '',
-                                    amount: amount,
+                                    amount: baseAmount,
                                     type: type,
                                     categoryId:
                                         categoryName.toLowerCase().trim(),

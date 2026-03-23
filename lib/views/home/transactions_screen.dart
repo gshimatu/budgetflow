@@ -17,9 +17,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   _DateFilter _filter = _DateFilter.all;
   DateTime? _customDay;
   String _currencyForForm = 'CDF';
+  double _rateForForm = 1.0;
 
   Future<void> _openAddTransaction(BuildContext context, String uid) async {
-    await showTransactionForm(context, uid: uid, currency: _currencyForForm);
+    await showTransactionForm(context, uid: uid, currency: _currencyForForm, rate: _rateForForm);
   }
 
   Future<void> _openEditTransaction(
@@ -27,7 +28,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     String uid,
     TransactionModel existing,
   ) async {
-    await showTransactionForm(context, uid: uid, existing: existing, currency: _currencyForForm);
+    await showTransactionForm(context, uid: uid, existing: existing, currency: _currencyForForm, rate: _rateForForm);
   }
 
   @override
@@ -65,7 +66,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           final prefs =
               (profile['preferences'] as Map?)?.cast<String, dynamic>() ?? {};
           final currency = prefs['currency'] as String? ?? 'CDF';
+          final rate = (prefs['rate'] as num?)?.toDouble() ?? 1.0;
           _currencyForForm = currency;
+          _rateForForm = rate;
           return StreamBuilder<List<TransactionModel>>(
             stream: FirestoreService().watchTransactions(user.uid),
             builder: (context, snapshot) {
@@ -92,7 +95,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               return ListView(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                 children: [
-                  _SummaryCard(summary: summary, currency: currency),
+                  _SummaryCard(summary: summary, currency: currency, rate: rate),
                   const SizedBox(height: 12),
                   _FilterChips(
                     selected: _filter,
@@ -115,6 +118,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     (tx) => _TransactionTile(
                       tx: tx,
                       currency: currency,
+                      rate: rate,
                       onEdit: () => _openEditTransaction(context, user.uid, tx),
                       onDelete: () => _confirmDelete(context, user.uid, tx),
                     ),
@@ -364,10 +368,11 @@ bool _isIncome(String type) {
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.summary, required this.currency});
+  const _SummaryCard({required this.summary, required this.currency, required this.rate});
 
   final _SummaryData summary;
   final String currency;
+  final double rate;
 
   @override
   Widget build(BuildContext context) {
@@ -393,7 +398,7 @@ class _SummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            _formatMoney(summary.balance, currency),
+            _formatMoney(summary.balance, currency, rate),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -405,7 +410,7 @@ class _SummaryCard extends StatelessWidget {
               Expanded(
                 child: _MiniStat(
                   label: 'Revenus',
-                  value: _formatMoney(summary.totalIncome, currency),
+                  value: _formatMoney(summary.totalIncome, currency, rate),
                   color: Colors.white,
                 ),
               ),
@@ -413,7 +418,7 @@ class _SummaryCard extends StatelessWidget {
               Expanded(
                 child: _MiniStat(
                   label: 'Depenses',
-                  value: _formatMoney(summary.totalExpense, currency),
+                  value: _formatMoney(summary.totalExpense, currency, rate),
                   color: Colors.white,
                 ),
               ),
@@ -471,12 +476,14 @@ class _TransactionTile extends StatelessWidget {
   const _TransactionTile({
     required this.tx,
     required this.currency,
+    required this.rate,
     required this.onEdit,
     required this.onDelete,
   });
 
   final TransactionModel tx;
   final String currency;
+  final double rate;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -556,7 +563,7 @@ class _TransactionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${isIncome ? '+' : '-'} ${_formatMoney(tx.amount, currency)}',
+                  '${isIncome ? '+' : '-'} ${_formatMoney(tx.amount, currency, rate)}',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: amountColor,
                         fontWeight: FontWeight.w700,
@@ -578,7 +585,7 @@ class _TransactionTile extends StatelessWidget {
   }
 }
 
-String _formatMoney(double value, String currency) {
+String _formatMoney(double value, String currency, double rate) {
   final formatter = NumberFormat.decimalPattern();
-  return '${formatter.format(value.round())} $currency';
+  return '${formatter.format((value * rate).round())} $currency';
 }

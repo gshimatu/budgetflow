@@ -48,6 +48,7 @@ class _StatsScreenState extends State<StatsScreen> {
           final prefs =
               (profile['preferences'] as Map?)?.cast<String, dynamic>() ?? {};
           final currency = prefs['currency'] as String? ?? 'CDF';
+          final rate = (prefs['rate'] as num?)?.toDouble() ?? 1.0;
           return StreamBuilder<List<TransactionModel>>(
             stream: FirestoreService().watchTransactions(user.uid),
             builder: (context, snapshot) {
@@ -100,11 +101,11 @@ class _StatsScreenState extends State<StatsScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                _SummaryRow(summary: summary, currency: currency),
+                _SummaryRow(summary: summary, currency: currency, rate: rate),
                 const SizedBox(height: 20),
                 _SectionTitle(title: 'Répartition des dépenses'),
                 const SizedBox(height: 12),
-                _PieChartCard(data: expensesByCategory, currency: currency),
+                _PieChartCard(data: expensesByCategory, currency: currency, rate: rate),
                 const SizedBox(height: 20),
                 _SectionTitle(title: 'Évolution mensuelle'),
                 const SizedBox(height: 12),
@@ -326,10 +327,11 @@ class _DropdownCard<T> extends StatelessWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.summary, required this.currency});
+  const _SummaryRow({required this.summary, required this.currency, required this.rate});
 
   final _SummaryData summary;
   final String currency;
+  final double rate;
 
   @override
   Widget build(BuildContext context) {
@@ -338,7 +340,7 @@ class _SummaryRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             title: 'Revenus',
-            value: _formatMoney(summary.totalIncome, currency),
+            value: _formatMoney(summary.totalIncome, currency, rate),
             color: const Color(0xFF33CC33),
             icon: Icons.trending_up,
           ),
@@ -347,7 +349,7 @@ class _SummaryRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             title: 'Dépenses',
-            value: _formatMoney(summary.totalExpense, currency),
+            value: _formatMoney(summary.totalExpense, currency, rate),
             color: const Color(0xFFFC7520),
             icon: Icons.trending_down,
           ),
@@ -356,7 +358,7 @@ class _SummaryRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             title: 'Solde',
-            value: _formatMoney(summary.balance, currency),
+            value: _formatMoney(summary.balance, currency, rate),
             color: const Color(0xFF0BC1DE),
             icon: Icons.account_balance_wallet,
           ),
@@ -428,10 +430,11 @@ class _StatCard extends StatelessWidget {
 }
 
 class _PieChartCard extends StatelessWidget {
-  const _PieChartCard({required this.data, required this.currency});
+  const _PieChartCard({required this.data, required this.currency, required this.rate});
 
   final Map<String, double> data;
   final String currency;
+  final double rate;
 
   @override
   Widget build(BuildContext context) {
@@ -501,6 +504,7 @@ class _PieChartCard extends StatelessWidget {
             colors: colors,
             total: total,
             currency: currency,
+            rate: rate,
           ),
         ],
       ),
@@ -930,12 +934,14 @@ class _PieLegend extends StatelessWidget {
     required this.colors,
     required this.total,
     required this.currency,
+    required this.rate,
   });
 
   final List<MapEntry<String, double>> entries;
   final List<Color> colors;
   final double total;
   final String currency;
+  final double rate;
 
   @override
   Widget build(BuildContext context) {
@@ -960,7 +966,7 @@ class _PieLegend extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(child: Text(item.key)),
               Text(
-                '${_formatMoney(item.value, currency)}  (${percent.toStringAsFixed(0)}%)',
+                '${_formatMoney(item.value, currency, rate)}  (${percent.toStringAsFixed(0)}%)',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -1030,8 +1036,8 @@ class _LegendItem {
   final Color color;
 }
 
-String _formatMoney(double value, String currency) {
+String _formatMoney(double value, String currency, double rate) {
   final formatter = NumberFormat.decimalPattern();
-  return '${formatter.format(value.round())} $currency';
+  return '${formatter.format((value * rate).round())} $currency';
 }
 

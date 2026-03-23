@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../models/transaction_model.dart';
 import '../../routes/app_routes.dart';
 import '../../services/firestore_service.dart';
+import '../../services/api_service.dart';
 import '../../controllers/theme_controller.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -56,9 +57,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       await user.reload();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     } on FirebaseAuthException catch (e) {
       _showError(_mapAuthError(e.code));
     } catch (_) {
@@ -80,7 +81,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-
   Future<void> _resetUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -88,8 +88,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    final hasPasswordProvider = user.providerData
-        .any((provider) => provider.providerId == 'password');
+    final hasPasswordProvider = user.providerData.any(
+      (provider) => provider.providerId == 'password',
+    );
     if (!hasPasswordProvider) {
       _showError(
         'Connexion via un fournisseur externe. Utilisez ce fournisseur pour reinitialiser votre compte.',
@@ -126,12 +127,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         labelText: 'Mot de passe',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          onPressed: () =>
-                              setState(() => obscure = !obscure),
+                          onPressed: () => setState(() => obscure = !obscure),
                           icon: Icon(
-                            obscure
-                                ? Icons.visibility_off
-                                : Icons.visibility,
+                            obscure ? Icons.visibility_off : Icons.visibility,
                           ),
                         ),
                         filled: true,
@@ -153,7 +151,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: saving ? null : () => Navigator.pop(context, false),
+                  onPressed: saving
+                      ? null
+                      : () => Navigator.pop(context, false),
                   child: const Text('Annuler'),
                 ),
                 FilledButton(
@@ -174,13 +174,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 code: 'invalid-email',
                               );
                             }
-                            final credential =
-                                EmailAuthProvider.credential(
+                            final credential = EmailAuthProvider.credential(
                               email: email,
                               password: passwordController.text,
                             );
-                            await user
-                                .reauthenticateWithCredential(credential);
+                            await user.reauthenticateWithCredential(credential);
                             await FirestoreService().resetUserData(user.uid);
                             if (!context.mounted) return;
                             Navigator.pop(context, true);
@@ -214,9 +212,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (confirmed != true) return;
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Donnees reinitialisees.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Donnees reinitialisees.')));
   }
 
   Future<void> _deleteAccount() async {
@@ -304,9 +302,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Text(
                             'Envoyer un commentaire',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           const Spacer(),
@@ -318,7 +314,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: type,
+                        initialValue: type,
                         items: const [
                           DropdownMenuItem(
                             value: 'Bug',
@@ -388,14 +384,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       uid: user.uid,
                                       email: user.email,
                                       type: type,
-                                      message:
-                                          messageController.text.trim(),
+                                      message: messageController.text.trim(),
                                     );
                                     if (!context.mounted) return;
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Merci pour votre retour.'),
+                                        content: Text(
+                                          'Merci pour votre retour.',
+                                        ),
                                       ),
                                     );
                                   } catch (_) {
@@ -443,8 +440,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    final hasPasswordProvider = user.providerData
-        .any((provider) => provider.providerId == 'password');
+    final hasPasswordProvider = user.providerData.any(
+      (provider) => provider.providerId == 'password',
+    );
     if (!hasPasswordProvider) {
       _showError(
         'Connexion via un fournisseur externe. Changez le mot de passe depuis ce fournisseur.',
@@ -490,9 +488,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Text(
                             'Changer le mot de passe',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           const Spacer(),
@@ -619,20 +615,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     }
                                     final credential =
                                         EmailAuthProvider.credential(
-                                      email: email,
-                                      password: oldController.text,
+                                          email: email,
+                                          password: oldController.text,
+                                        );
+                                    await user.reauthenticateWithCredential(
+                                      credential,
                                     );
-                                    await user
-                                        .reauthenticateWithCredential(
-                                            credential);
-                                    await user
-                                        .updatePassword(newController.text);
+                                    await user.updatePassword(
+                                      newController.text,
+                                    );
                                     if (!mounted) return;
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content:
-                                            Text('Mot de passe mis a jour.'),
+                                        content: Text(
+                                          'Mot de passe mis a jour.',
+                                        ),
                                       ),
                                     );
                                   } on FirebaseAuthException catch (e) {
@@ -671,9 +669,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _mapAuthError(String code) {
@@ -704,7 +702,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Profil')),
-        body: const Center(child: Text('Connectez-vous pour voir votre profil.')),
+        body: const Center(
+          child: Text('Connectez-vous pour voir votre profil.'),
+        ),
       );
     }
 
@@ -719,8 +719,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Text(
                 'Profil',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 16),
               Container(
@@ -751,9 +751,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Text(
                             user.displayName ?? 'Utilisateur BudgetFlow',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
+                            style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,
@@ -762,9 +760,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(height: 4),
                           Text(
                             user.email ?? 'email@exemple.com',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
+                            style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: Colors.white70),
                           ),
                         ],
@@ -870,7 +866,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final data = snapshot.data ?? {};
                   final prefs =
                       (data['preferences'] as Map?)?.cast<String, dynamic>() ??
-                          {};
+                      {};
                   final notifications = prefs['notifications'] as bool? ?? true;
                   final weeklyReport = prefs['weeklyReport'] as bool? ?? false;
                   final currency = prefs['currency'] as String? ?? 'CDF';
@@ -891,9 +887,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                     onCurrencyChanged: (value) async {
-                      await FirestoreService().updateUserCurrency(
-                        user.uid,
-                        value,
+                      final baseCurrency =
+                          (prefs['baseCurrency'] as String?) ?? currency;
+                      final rate = await ApiService().getRate(
+                        from: baseCurrency,
+                        to: value,
+                      );
+                      await FirestoreService().convertUserCurrency(
+                        uid: user.uid,
+                        baseCurrency: baseCurrency,
+                        to: value,
+                        rate: rate,
                       );
                     },
                   );
@@ -906,9 +910,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final data = snapshot.data ?? {};
                   final prefs =
                       (data['preferences'] as Map?)?.cast<String, dynamic>() ??
-                          {};
+                      {};
                   final weeklyReport = prefs['weeklyReport'] as bool? ?? false;
                   final currency = prefs['currency'] as String? ?? 'CDF';
+                  final rate = (prefs['rate'] as num?)?.toDouble() ?? 1.0;
                   if (!weeklyReport) {
                     return const SizedBox.shrink();
                   }
@@ -917,7 +922,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       _SectionTitle(title: 'Résumé hebdomadaire'),
                       const SizedBox(height: 12),
-                      _WeeklyReportCard(uid: user.uid, currency: currency),
+                      _WeeklyReportCard(
+                        uid: user.uid,
+                        currency: currency,
+                        rate: rate,
+                      ),
                       const SizedBox(height: 20),
                     ],
                   );
@@ -949,8 +958,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const Divider(height: 1),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.restart_alt,
-                          color: Color(0xFFFC7520)),
+                      leading: const Icon(
+                        Icons.restart_alt,
+                        color: Color(0xFFFC7520),
+                      ),
                       title: const Text(
                         'Reinitialiser mes donnees',
                         style: TextStyle(color: Color(0xFFFC7520)),
@@ -970,8 +981,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const Divider(height: 1),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.delete_forever,
-                          color: Color(0xFFEF4444)),
+                      leading: const Icon(
+                        Icons.delete_forever,
+                        color: Color(0xFFEF4444),
+                      ),
                       title: const Text(
                         'Supprimer mon compte',
                         style: TextStyle(color: Color(0xFFEF4444)),
@@ -1028,9 +1041,9 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
     );
   }
 }
@@ -1050,7 +1063,7 @@ class _PreferencesCard extends StatefulWidget {
   final String currency;
   final ValueChanged<bool> onToggleNotifications;
   final ValueChanged<bool> onToggleWeeklyReport;
-  final Future<void> Function(String) onCurrencyChanged;
+  final Future<void> Function(String value) onCurrencyChanged;
 
   @override
   State<_PreferencesCard> createState() => _PreferencesCardState();
@@ -1063,6 +1076,7 @@ class _PreferencesCardState extends State<_PreferencesCard> {
   String _pendingCurrency = 'CDF';
   bool _initialized = false;
   bool _savingCurrency = false;
+  double _progress = 0;
 
   final _currencies = const ['CDF', 'USD', 'EUR', 'GBP', 'ZAR', 'NGN'];
 
@@ -1136,13 +1150,11 @@ class _PreferencesCardState extends State<_PreferencesCard> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _pendingCurrency,
+                initialValue: _pendingCurrency,
                 items: _currencies
                     .map(
-                      (code) => DropdownMenuItem(
-                        value: code,
-                        child: Text(code),
-                      ),
+                      (code) =>
+                          DropdownMenuItem(value: code, child: Text(code)),
                     )
                     .toList(),
                 onChanged: (value) {
@@ -1152,8 +1164,9 @@ class _PreferencesCardState extends State<_PreferencesCard> {
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.currency_exchange),
                   filled: true,
-                  fillColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -1167,10 +1180,41 @@ class _PreferencesCardState extends State<_PreferencesCard> {
                   onPressed: (_pendingCurrency == _currency || _savingCurrency)
                       ? null
                       : () async {
-                          setState(() => _savingCurrency = true);
+                          setState(() {
+                            _savingCurrency = true;
+                            _progress = 0;
+                          });
+                          if (!mounted) return;
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Conversion en cours'),
+                                content: Row(
+                                  children: [
+                                    const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        'Mise a jour de la devise...',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
                           try {
                             await widget.onCurrencyChanged(_pendingCurrency);
                             if (!mounted) return;
+                            Navigator.pop(context);
                             setState(() {
                               _currency = _pendingCurrency;
                               _savingCurrency = false;
@@ -1182,6 +1226,7 @@ class _PreferencesCardState extends State<_PreferencesCard> {
                             );
                           } catch (_) {
                             if (!mounted) return;
+                            Navigator.pop(context);
                             setState(() => _savingCurrency = false);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -1211,9 +1256,7 @@ class _PreferencesCardState extends State<_PreferencesCard> {
                 contentPadding: EdgeInsets.zero,
                 secondary: const Icon(Icons.dark_mode_outlined),
                 title: const Text('Mode sombre'),
-                subtitle: Text(
-                  themeController.isDark ? 'Sombre' : 'Clair',
-                ),
+                subtitle: Text(themeController.isDark ? 'Sombre' : 'Clair'),
                 value: themeController.isDark,
                 onChanged: (value) {
                   themeController.setDarkMode(value);
@@ -1228,10 +1271,15 @@ class _PreferencesCardState extends State<_PreferencesCard> {
 }
 
 class _WeeklyReportCard extends StatelessWidget {
-  const _WeeklyReportCard({required this.uid, required this.currency});
+  const _WeeklyReportCard({
+    required this.uid,
+    required this.currency,
+    required this.rate,
+  });
 
   final String uid;
   final String currency;
+  final double rate;
 
   @override
   Widget build(BuildContext context) {
@@ -1280,27 +1328,27 @@ class _WeeklyReportCard extends StatelessWidget {
           final topCategory = categories.entries.isEmpty
               ? null
               : (categories.entries.toList()
-                    ..sort((a, b) => b.value.compareTo(a.value)))
-                  .first;
+                      ..sort((a, b) => b.value.compareTo(a.value)))
+                    .first;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Semaine du ${DateFormat('dd MMM').format(start)} au ${DateFormat('dd MMM').format(end)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.black54,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.black54),
               ),
               const SizedBox(height: 12),
               _WeeklyLine(
                 label: 'Revenus',
-                value: _formatMoney(income, currency),
+                value: _formatMoney(income, currency, rate),
                 color: const Color(0xFF16A34A),
               ),
               const SizedBox(height: 6),
               _WeeklyLine(
                 label: 'Dépenses',
-                value: _formatMoney(expense, currency),
+                value: _formatMoney(expense, currency, rate),
                 color: const Color(0xFFEF4444),
               ),
               const SizedBox(height: 10),
@@ -1339,16 +1387,13 @@ class _WeeklyLine extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
         ),
         Text(
           value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
     );
@@ -1360,8 +1405,7 @@ bool _isIncome(String type) {
   return value.contains('revenu') || value == 'income';
 }
 
-String _formatMoney(double value, String currency) {
+String _formatMoney(double value, String currency, double rate) {
   final formatter = NumberFormat.decimalPattern();
-  return '${formatter.format(value.round())} $currency';
+  return '${formatter.format((value * rate).round())} $currency';
 }
-
