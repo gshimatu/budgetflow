@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../models/category_model.dart';
 import '../../models/transaction_model.dart';
+import '../../services/api_service.dart';
 import '../../services/firestore_service.dart';
 
 Future<void> showTransactionForm(
@@ -11,6 +12,7 @@ Future<void> showTransactionForm(
   String initialType = 'expense',
   TransactionModel? existing,
   String currency = 'CDF',
+  String baseCurrency = 'CDF',
   double rate = 1.0,
 }) async {
   final formKey = GlobalKey<FormState>();
@@ -24,6 +26,76 @@ Future<void> showTransactionForm(
   String type = existing?.type ?? initialType;
   String? selectedCategory = existing?.categoryName;
   String? customCategory;
+  String amountCurrency = currency;
+  bool loadingRate = false;
+  String? rateError;
+  double? rateToBase;
+  bool initialized = false;
+  bool saving = false;
+
+  final currencyOptions = <String>{
+    'CDF',
+    'USD',
+    'EUR',
+    'GBP',
+    'ZAR',
+    'NGN',
+    currency,
+    baseCurrency,
+  }.toList()
+    ..sort();
+
+  double? _parseAmount() {
+    final raw = amountController.text.trim().replaceAll(',', '.');
+    if (raw.isEmpty) return null;
+    final parsed = double.tryParse(raw);
+    if (parsed == null || parsed <= 0) return null;
+    return parsed;
+  }
+
+  Future<void> _ensureRateToBase(
+    String selected,
+    void Function(VoidCallback fn) setState,
+  ) async {
+    if (selected == baseCurrency) {
+      setState(() {
+        rateToBase = 1.0;
+        rateError = null;
+      });
+      return;
+    }
+
+    if (selected == currency) {
+      final inverted = rate == 0 ? null : (1 / rate);
+      setState(() {
+        rateToBase = inverted;
+        rateError = inverted == null ? 'Taux invalide' : null;
+      });
+      return;
+    }
+
+    setState(() {
+      loadingRate = true;
+      rateError = null;
+    });
+    try {
+      final fetched = await ApiService().getRate(
+        from: selected,
+        to: baseCurrency,
+      );
+      setState(() {
+        rateToBase = fetched;
+        rateError = null;
+      });
+    } catch (e) {
+      setState(() {
+        rateError = e.toString().replaceFirst('Exception: ', '');
+        rateToBase = null;
+      });
+    } finally {
+      setState(() => loadingRate = false);
+    }
+  }
 
   await showModalBottomSheet(
     context: context,
@@ -32,6 +104,14 @@ Future<void> showTransactionForm(
     builder: (context) {
       return StatefulBuilder(
         builder: (context, setState) {
+          if (!initialized) {
+            initialized = true;
+            Future.microtask(() {
+              if (context.mounted) {
+                _ensureRateToBase(amountCurrency, setState);
+              }
+            });
+          }
           return Padding(
             padding: EdgeInsets.only(
               left: 20,
@@ -106,7 +186,36 @@ Future<void> showTransactionForm(
                                 labelText: 'Montant',
                                 prefixIcon:
                                     const Icon(Icons.payments_outlined),
-                                suffixText: currency,
+                                suffixIconConstraints: const BoxConstraints(
+                                  minWidth: 90,
+                                ),
+                                suffixIcon: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: amountCurrency,
+                                    items: currencyOptions
+                                        .map(
+                                          (code) => DropdownMenuItem(
+                                            value: code,
+                                            child: Text(code),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: loadingRate
+                                        ? null
+                                        : (value) async {
+                                            if (value == null) return;
+                                            setState(() {
+                                              amountCurrency = value;
+                                              rateError = null;
+                                              rateToBase = null;
+                                            });
+                                            await _ensureRateToBase(
+                                              value,
+                                              setState,
+                                            );
+                                          },
+                                  ),
+                                ),
                                 filled: true,
                                 fillColor: Theme.of(context)
                                     .colorScheme
@@ -128,7 +237,63 @@ Future<void> showTransactionForm(
                                 }
                                 return null;
                               },
+                              onChanged: (_) {
+                                if (rateError != null) return;
+                                setState(() {});
+                              },
                             ),
+                            if (loadingRate || rateError != null) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  if (loadingRate)
+                                    const SizedBox(
+                                      height: 16,
+                                      width: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  if (loadingRate) const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      loadingRate
+                                          ? 'Conversion en cours...'
+                                          : (rateError ?? ''),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(color: Colors.redAccent),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ] else if (amountCurrency != currency) ...[
+                              const SizedBox(height: 8),
+                              Builder(
+                                builder: (context) {
+                                  final parsed = _parseAmount();
+                                  if (parsed == null || rateToBase == null) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  final baseAmount = parsed * rateToBase!;
+                                  final displayAmount = baseAmount * rate;
+                                  final formatter =
+                                      NumberFormat.decimalPattern();
+                                  return Text(
+                                    'Equivalent: ${formatter.format(displayAmount)} $currency',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                        ),
+                                  );
+                                },
+                              ),
+                            ],
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
                               value: type,
@@ -271,46 +436,91 @@ Future<void> showTransactionForm(
                             SizedBox(
                               width: double.infinity,
                               child: FilledButton(
-                                onPressed: () async {
-                                  if (!formKey.currentState!.validate()) {
-                                    return;
-                                  }
-                                  final amount = double.parse(
-                                    amountController.text
-                                        .trim()
-                                        .replaceAll(',', '.'),
-                                  );
-                                  final baseAmount = rate == 0
-                                      ? amount
-                                      : amount / rate;
-                                  final chosen = selectedCategory == 'Autre'
-                                      ? (customCategory ?? '')
-                                      : (selectedCategory ?? '');
-                                  final categoryName = chosen.trim();
-                                  final transaction = TransactionModel(
-                                    id: existing?.id ?? '',
-                                    amount: baseAmount,
-                                    type: type,
-                                    categoryId:
-                                        categoryName.toLowerCase().trim(),
-                                    categoryName: categoryName,
-                                    date: selectedDate,
-                                    note: noteController.text.trim(),
-                                  );
-                                  if (existing == null) {
-                                    await FirestoreService()
-                                        .addTransaction(uid, transaction);
-                                  } else {
-                                    await FirestoreService().updateTransaction(
-                                      uid,
-                                      existing.id,
-                                      transaction,
-                                    );
-                                  }
-                                  if (context.mounted) {
-                                    Navigator.pop(context);
-                                  }
-                                },
+                                onPressed: saving
+                                    ? null
+                                    : () async {
+                                        if (!formKey.currentState!.validate()) {
+                                          return;
+                                        }
+                                        setState(() => saving = true);
+                                        try {
+                                          final amount = double.parse(
+                                            amountController.text
+                                                .trim()
+                                                .replaceAll(',', '.'),
+                                          );
+                                          double baseAmount;
+                                          if (amountCurrency == baseCurrency) {
+                                            baseAmount = amount;
+                                          } else if (amountCurrency == currency) {
+                                            baseAmount = rate == 0
+                                                ? amount
+                                                : amount / rate;
+                                          } else {
+                                            double? localRate = rateToBase;
+                                            if (localRate == null) {
+                                              try {
+                                                localRate = await ApiService()
+                                                    .getRate(
+                                                  from: amountCurrency,
+                                                  to: baseCurrency,
+                                                );
+                                                setState(() => rateToBase = localRate);
+                                              } catch (e) {
+                                                setState(() {
+                                                  saving = false;
+                                                  rateError = e
+                                                      .toString()
+                                                      .replaceFirst('Exception: ', '');
+                                                });
+                                                return;
+                                              }
+                                            }
+                                            baseAmount = amount * localRate;
+                                          }
+                                          final chosen =
+                                              selectedCategory == 'Autre'
+                                                  ? (customCategory ?? '')
+                                                  : (selectedCategory ?? '');
+                                          final categoryName = chosen.trim();
+                                          final transaction = TransactionModel(
+                                            id: existing?.id ?? '',
+                                            amount: baseAmount,
+                                            type: type,
+                                            categoryId:
+                                                categoryName.toLowerCase().trim(),
+                                            categoryName: categoryName,
+                                            date: selectedDate,
+                                            note: noteController.text.trim(),
+                                          );
+                                          if (existing == null) {
+                                            await FirestoreService()
+                                                .addTransaction(uid, transaction);
+                                          } else {
+                                            await FirestoreService()
+                                                .updateTransaction(
+                                              uid,
+                                              existing.id,
+                                              transaction,
+                                            );
+                                          }
+                                          if (context.mounted) {
+                                            Navigator.pop(context);
+                                          }
+                                        } catch (_) {
+                                          if (context.mounted) {
+                                            setState(() => saving = false);
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  "Impossible d'enregistrer la transaction.",
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
                                 child: Text(
                                   existing == null ? 'Ajouter' : 'Mettre à jour',
                                 ),

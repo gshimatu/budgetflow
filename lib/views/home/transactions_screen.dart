@@ -17,10 +17,17 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   _DateFilter _filter = _DateFilter.all;
   DateTime? _customDay;
   String _currencyForForm = 'CDF';
+  String _baseCurrencyForForm = 'CDF';
   double _rateForForm = 1.0;
 
   Future<void> _openAddTransaction(BuildContext context, String uid) async {
-    await showTransactionForm(context, uid: uid, currency: _currencyForForm, rate: _rateForForm);
+    await showTransactionForm(
+      context,
+      uid: uid,
+      currency: _currencyForForm,
+      baseCurrency: _baseCurrencyForForm,
+      rate: _rateForForm,
+    );
   }
 
   Future<void> _openEditTransaction(
@@ -28,7 +35,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     String uid,
     TransactionModel existing,
   ) async {
-    await showTransactionForm(context, uid: uid, existing: existing, currency: _currencyForForm, rate: _rateForForm);
+    await showTransactionForm(
+      context,
+      uid: uid,
+      existing: existing,
+      currency: _currencyForForm,
+      baseCurrency: _baseCurrencyForForm,
+      rate: _rateForForm,
+    );
   }
 
   @override
@@ -66,8 +80,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           final prefs =
               (profile['preferences'] as Map?)?.cast<String, dynamic>() ?? {};
           final currency = prefs['currency'] as String? ?? 'CDF';
+          final baseCurrency =
+              (prefs['baseCurrency'] as String?) ?? currency;
           final rate = (prefs['rate'] as num?)?.toDouble() ?? 1.0;
           _currencyForForm = currency;
+          _baseCurrencyForForm = baseCurrency;
           _rateForForm = rate;
           return StreamBuilder<List<TransactionModel>>(
             stream: FirestoreService().watchTransactions(user.uid),

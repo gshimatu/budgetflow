@@ -68,6 +68,8 @@ class HomeScreen extends StatelessWidget {
                       (profile['preferences'] as Map?)?.cast<String, dynamic>() ??
                           {};
                   final currency = prefs['currency'] as String? ?? 'CDF';
+                  final baseCurrency =
+                      (prefs['baseCurrency'] as String?) ?? currency;
                   final rate = (prefs['rate'] as num?)?.toDouble() ?? 1.0;
                   return StreamBuilder<List<TransactionModel>>(
                     stream: FirestoreService().watchTransactions(user.uid),
@@ -108,6 +110,7 @@ class HomeScreen extends StatelessWidget {
                                   uid: user.uid,
                                   initialType: 'expense',
                                   currency: currency,
+                                  baseCurrency: baseCurrency,
                                   rate: rate,
                                 );
                               },
@@ -118,6 +121,7 @@ class HomeScreen extends StatelessWidget {
                                   uid: user.uid,
                                   initialType: 'income',
                                   currency: currency,
+                                  baseCurrency: baseCurrency,
                                   rate: rate,
                                 );
                               },
