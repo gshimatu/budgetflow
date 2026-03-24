@@ -9,6 +9,7 @@ class TransactionModel {
     required this.date,
     this.note,
     this.categoryName,
+    this.originalCurrency,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class TransactionModel {
   final DateTime date;
   final String? note;
   final String? categoryName;
+  final String? originalCurrency;
 
   factory TransactionModel.fromMap(String id, Map<String, dynamic> data) {
     final rawDate = data['date'];
@@ -37,6 +39,7 @@ class TransactionModel {
       date: parsedDate,
       note: data['note'] as String?,
       categoryName: data['categoryName'] as String?,
+      originalCurrency: data['originalCurrency'] as String?,
     );
   }
 
@@ -48,6 +51,7 @@ class TransactionModel {
       'date': Timestamp.fromDate(date),
       'note': note,
       'categoryName': categoryName,
+      'originalCurrency': originalCurrency,
     };
   }
 }

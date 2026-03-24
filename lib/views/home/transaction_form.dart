@@ -492,6 +492,7 @@ Future<void> showTransactionForm(
                                             categoryName: categoryName,
                                             date: selectedDate,
                                             note: noteController.text.trim(),
+                                            originalCurrency: amountCurrency,
                                           );
                                           if (existing == null) {
                                             await FirestoreService()

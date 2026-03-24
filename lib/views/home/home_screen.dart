@@ -1151,7 +1151,11 @@ class _RecentTransactions extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         ...transactions.map(
-          (tx) => _TransactionTile(tx: tx, currency: currency, rate: rate),
+          (tx) => _TransactionTile(
+            tx: tx,
+            currency: currency,
+            rate: rate,
+          ),
         ),
       ],
     );
@@ -1159,7 +1163,11 @@ class _RecentTransactions extends StatelessWidget {
 }
 
 class _TransactionTile extends StatelessWidget {
-  const _TransactionTile({required this.tx, required this.currency, required this.rate});
+  const _TransactionTile({
+    required this.tx,
+    required this.currency,
+    required this.rate,
+  });
 
   final TransactionModel tx;
   final String currency;
@@ -1222,6 +1230,17 @@ class _TransactionTile extends StatelessWidget {
                               Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                 ),
+                if (tx.originalCurrency != null &&
+                    tx.originalCurrency!.isNotEmpty &&
+                    tx.originalCurrency != currency) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Devise: ${tx.originalCurrency} -> $currency',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
               ],
             ),
           ),

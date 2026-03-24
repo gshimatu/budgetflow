@@ -564,6 +564,17 @@ class _TransactionTile extends StatelessWidget {
                           color: scheme.onSurfaceVariant,
                         ),
                   ),
+                  if (tx.originalCurrency != null &&
+                      tx.originalCurrency!.isNotEmpty &&
+                      tx.originalCurrency != currency) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Devise: ${tx.originalCurrency} -> $currency',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
                   if (tx.note != null && tx.note!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
