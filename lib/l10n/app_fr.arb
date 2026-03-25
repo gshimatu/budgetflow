@@ -1,0 +1,16 @@
+{
+  "@appTitle": {
+    "description": "Nom de l'application"
+  },
+  "appTitle": "BudgetFlow",
+  "language": "Langue",
+  "english": "Anglais",
+  "french": "Francais",
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "add": "Ajouter",
+  "update": "Mettre a jour",
+  "delete": "Supprimer",
+  "confirm": "Confirmer",
+  "ok": "OK"
+}
