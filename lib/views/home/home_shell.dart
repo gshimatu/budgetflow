@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../controllers/user_controller.dart';
 import '../admin/admin_dashboard.dart';
@@ -35,17 +36,17 @@ class _HomeShellState extends State<HomeShell> {
     ];
 
     final items = <BottomNavigationBarItem>[
-      const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
-      const BottomNavigationBarItem(
-          icon: Icon(Icons.swap_horiz), label: 'Transactions'),
+      BottomNavigationBarItem(icon: const Icon(Icons.home), label: AppLocalizations.of(context)!.navHome),
+      BottomNavigationBarItem(
+          icon: const Icon(Icons.swap_horiz), label: AppLocalizations.of(context)!.navTransactions),
       const BottomNavigationBarItem(
           icon: Icon(Icons.category_outlined), label: 'Catégories'),
-      const BottomNavigationBarItem(
-          icon: Icon(Icons.bar_chart), label: 'Stats'),
-      const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+      BottomNavigationBarItem(
+          icon: const Icon(Icons.bar_chart), label: AppLocalizations.of(context)!.navStats),
+      BottomNavigationBarItem(icon: const Icon(Icons.person), label: AppLocalizations.of(context)!.navProfile),
       if (isAdmin)
-        const BottomNavigationBarItem(
-            icon: Icon(Icons.admin_panel_settings), label: 'Admin'),
+        BottomNavigationBarItem(
+            icon: const Icon(Icons.admin_panel_settings), label: AppLocalizations.of(context)!.navAdmin),
     ];
 
     return Scaffold(

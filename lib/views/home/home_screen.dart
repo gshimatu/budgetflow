@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../models/transaction_model.dart';
 import '../../services/api_service.dart';
@@ -58,7 +59,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             if (user == null)
-              const Center(child: Text('Connectez-vous pour voir vos données.'))
+              Center(child: Text(AppLocalizations.of(context)!.signInToSeeData))
             else
               StreamBuilder<Map<String, dynamic>>(
                 stream: FirestoreService().watchUserProfile(user.uid),
@@ -104,7 +105,6 @@ class HomeScreen extends StatelessWidget {
                             _QuickActions(
                               brandOrange: brandOrange,
                               onAddExpense: () async {
-                                if (user == null) return;
                                 await showTransactionForm(
                                   context,
                                   uid: user.uid,
@@ -115,7 +115,6 @@ class HomeScreen extends StatelessWidget {
                                 );
                               },
                               onAddIncome: () async {
-                                if (user == null) return;
                                 await showTransactionForm(
                                   context,
                                   uid: user.uid,
@@ -204,7 +203,7 @@ Future<void> _openConverter(BuildContext context) async {
                     Row(
                       children: [
                         Text(
-                          'Convertisseur',
+                          AppLocalizations.of(context)!.converterTitle,
                           style: Theme.of(context)
                               .textTheme
                               .titleMedium
@@ -223,7 +222,7 @@ Future<void> _openConverter(BuildContext context) async {
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
-                        labelText: 'Montant',
+                        labelText: AppLocalizations.of(context)!.amount,
                         prefixIcon: const Icon(Icons.payments_outlined),
                         filled: true,
                         fillColor: scheme.surfaceContainerHighest,
@@ -234,13 +233,13 @@ Future<void> _openConverter(BuildContext context) async {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Veuillez saisir un montant';
+                          return AppLocalizations.of(context)!.enterAmount;
                         }
                         final parsed = double.tryParse(
                           value.replaceAll(',', '.'),
                         );
                         if (parsed == null || parsed <= 0) {
-                          return 'Montant invalide';
+                          return AppLocalizations.of(context)!.invalidAmount;
                         }
                         return null;
                       },
@@ -250,7 +249,7 @@ Future<void> _openConverter(BuildContext context) async {
                       children: [
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: from,
+                            initialValue: from,
                             items: currencies
                                 .map(
                                   (code) => DropdownMenuItem(
@@ -264,7 +263,7 @@ Future<void> _openConverter(BuildContext context) async {
                               setState(() => from = value);
                             },
                             decoration: InputDecoration(
-                              labelText: 'De',
+                              labelText: AppLocalizations.of(context)!.from,
                               filled: true,
                               fillColor: scheme.surfaceContainerHighest,
                               border: OutlineInputBorder(
@@ -277,7 +276,7 @@ Future<void> _openConverter(BuildContext context) async {
                         const SizedBox(width: 12),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: to,
+                            initialValue: to,
                             items: currencies
                                 .map(
                                   (code) => DropdownMenuItem(
@@ -291,7 +290,7 @@ Future<void> _openConverter(BuildContext context) async {
                               setState(() => to = value);
                             },
                             decoration: InputDecoration(
-                              labelText: 'Vers',
+                              labelText: AppLocalizations.of(context)!.to,
                               filled: true,
                               fillColor: scheme.surfaceContainerHighest,
                               border: OutlineInputBorder(
@@ -370,7 +369,7 @@ Future<void> _openConverter(BuildContext context) async {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('Convertir'),
+                            : Text(AppLocalizations.of(context)!.convert),
                       ),
                     ),
                   ],
@@ -465,7 +464,7 @@ class _HeaderSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Bonjour,',
+                AppLocalizations.of(context)!.hello,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -538,7 +537,7 @@ class _BalanceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Solde actuel',
+            AppLocalizations.of(context)!.balanceTitle,
             style: Theme.of(context)
                 .textTheme
                 .titleMedium
@@ -558,7 +557,7 @@ class _BalanceCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _BalanceChip(
-                label: 'Revenus ${_formatMoney(income, currency, rate)}',
+                label: '${AppLocalizations.of(context)!.income}  ${_formatMoney(income, currency, rate)}',
                 icon: Icons.trending_up,
               ),
               _BalanceChip(
@@ -619,12 +618,11 @@ class _QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Actions rapides',
+          AppLocalizations.of(context)!.quickActions,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
@@ -634,7 +632,7 @@ class _QuickActions extends StatelessWidget {
           children: [
             Expanded(
               child: _ActionTile(
-                label: 'Ajouter dépense',
+                label: AppLocalizations.of(context)!.addExpense,
                 icon: Icons.remove_circle_outline,
                 color: brandOrange,
                 onTap: onAddExpense,
@@ -643,7 +641,7 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _ActionTile(
-                label: 'Ajouter revenu',
+                label: AppLocalizations.of(context)!.addIncome,
                 icon: Icons.add_circle_outline,
                 color: const Color(0xFF22C55E),
                 onTap: onAddIncome,
@@ -652,7 +650,7 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _ActionTile(
-                label: 'Convertir',
+                label: AppLocalizations.of(context)!.convert,
                 icon: Icons.currency_exchange,
                 color: const Color(0xFF0BC1DE),
                 onTap: onConvert,
@@ -759,9 +757,9 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final scheme = Theme.of(context).colorScheme;
         return StatefulBuilder(
           builder: (context, setState) {
+            final scheme = Theme.of(context).colorScheme;
             return Padding(
               padding: EdgeInsets.only(
                 left: 20,
@@ -782,7 +780,7 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
                       Row(
                         children: [
                           Text(
-                            'Definir l\'objectif mensuel',
+                            AppLocalizations.of(context)!.setMonthlyGoal,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleMedium
@@ -801,7 +799,7 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
                         keyboardType:
                             const TextInputType.numberWithOptions(decimal: true),
                         decoration: InputDecoration(
-                          labelText: 'Montant (${widget.currency})',
+                          labelText: AppLocalizations.of(context)!.amountWithCurrency(widget.currency),
                           prefixIcon: const Icon(Icons.flag_outlined),
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest,
@@ -812,13 +810,13 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Veuillez saisir un montant';
+                            return AppLocalizations.of(context)!.enterAmount;
                           }
                           final parsed = double.tryParse(
                             value.replaceAll(',', '.'),
                           );
                           if (parsed == null || parsed <= 0) {
-                            return 'Montant invalide';
+                            return AppLocalizations.of(context)!.invalidAmount;
                           }
                           return null;
                         },
@@ -851,17 +849,17 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
                                     if (!context.mounted) return;
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
+                                      SnackBar(
                                         content:
-                                            Text('Objectif mis a jour.'),
+                                            Text(AppLocalizations.of(context)!.goalUpdated),
                                       ),
                                     );
                                   } catch (_) {
                                     if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
+                                      SnackBar(
                                         content: Text(
-                                          'Impossible de mettre a jour.',
+                                          AppLocalizations.of(context)!.updateFailed,
                                         ),
                                       ),
                                     );
@@ -880,7 +878,7 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text('Enregistrer'),
+                              : Text(AppLocalizations.of(context)!.save),
                         ),
                       ),
                     ],
@@ -908,7 +906,7 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
         final progress =
             goal <= 0
                 ? 0.0
-                : (widget.totalExpense / goal).clamp(0.0, 1.0) as double;
+                : (widget.totalExpense / goal).clamp(0.0, 1.0);
         final remaining = goal <= 0
             ? 0.0
             : (goal - widget.totalExpense).clamp(0, goal).toDouble();
@@ -934,7 +932,7 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Objectif mensuel',
+                    AppLocalizations.of(context)!.monthlyGoal,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -942,7 +940,7 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
                   Row(
                     children: [
                       Text(
-                        goal <= 0 ? 'A definir' : '$percent%',
+                        goal <= 0 ? AppLocalizations.of(context)!.toDefine : '$percent%',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               color: widget.brandGreen,
                               fontWeight: FontWeight.w700,
@@ -954,7 +952,7 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
                         ),
                         icon: const Icon(Icons.edit_outlined),
                         color: widget.brandGreen,
-                        tooltip: 'Modifier',
+                        tooltip: AppLocalizations.of(context)!.edit,
                       ),
                     ],
                   ),
@@ -973,8 +971,8 @@ class _BudgetOverviewState extends State<_BudgetOverview> {
               const SizedBox(height: 12),
               Text(
                 goal <= 0
-                    ? 'Definis ton objectif pour ce mois'
-                    : 'Budget restant : ${_formatMoney(remaining, widget.currency, widget.rate)}',
+                    ? AppLocalizations.of(context)!.defineGoalHint
+                    : AppLocalizations.of(context)!.budgetRemaining(_formatMoney(remaining, widget.currency, widget.rate)),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -1019,7 +1017,7 @@ class _InsightsRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _InsightCard(
-            title: 'Revenus du mois',
+            title: AppLocalizations.of(context)!.monthlyIncome,
             value: _formatMoney(income, currency, rate),
             color: brandCyan,
             icon: Icons.account_balance_wallet_outlined,
@@ -1114,19 +1112,19 @@ class _RecentTransactions extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Transactions récentes',
+                AppLocalizations.of(context)!.recentTransactions,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
               ),
               TextButton(
                 onPressed: onViewAll,
-                child: const Text('Voir tout'),
+                child: Text(AppLocalizations.of(context)!.viewAll),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text('Aucune transaction pour le moment.'),
+          Text(AppLocalizations.of(context)!.noTransactionsYet),
         ],
       );
     }
@@ -1138,14 +1136,14 @@ class _RecentTransactions extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Transactions récentes',
+              AppLocalizations.of(context)!.recentTransactions,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
             ),
             TextButton(
               onPressed: onViewAll,
-              child: const Text('Voir tout'),
+              child: Text(AppLocalizations.of(context)!.viewAll),
             ),
           ],
         ),
@@ -1235,7 +1233,7 @@ class _TransactionTile extends StatelessWidget {
                     tx.originalCurrency != currency) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'Devise: ${tx.originalCurrency} -> $currency',
+                    AppLocalizations.of(context)!.currencyFromTo(tx.originalCurrency ?? '', currency),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
