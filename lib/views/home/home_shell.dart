@@ -23,6 +23,7 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final isAdmin = context.watch<UserController>().isAdmin;
+    final scheme = Theme.of(context).colorScheme;
 
     final tabs = <Widget>[
       HomeScreen(
@@ -39,8 +40,8 @@ class _HomeShellState extends State<HomeShell> {
       BottomNavigationBarItem(icon: const Icon(Icons.home), label: AppLocalizations.of(context)!.navHome),
       BottomNavigationBarItem(
           icon: const Icon(Icons.swap_horiz), label: AppLocalizations.of(context)!.navTransactions),
-      const BottomNavigationBarItem(
-          icon: Icon(Icons.category_outlined), label: 'Catégories'),
+      BottomNavigationBarItem(
+          icon: const Icon(Icons.category_outlined), label: AppLocalizations.of(context)!.navCategories),
       BottomNavigationBarItem(
           icon: const Icon(Icons.bar_chart), label: AppLocalizations.of(context)!.navStats),
       BottomNavigationBarItem(icon: const Icon(Icons.person), label: AppLocalizations.of(context)!.navProfile),
@@ -56,6 +57,11 @@ class _HomeShellState extends State<HomeShell> {
         items: items,
         onTap: (index) => setState(() => _currentIndex = index),
         type: BottomNavigationBarType.fixed,
+        selectedItemColor: scheme.primary,
+        unselectedItemColor: scheme.onSurfaceVariant,
+        selectedIconTheme: IconThemeData(color: scheme.primary, size: 26),
+        unselectedIconTheme: IconThemeData(color: scheme.onSurfaceVariant),
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
       ),
     );
   }
