@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../routes/app_routes.dart';
@@ -42,9 +43,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (success) {
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } else if (auth.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.errorMessage!)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(auth.errorMessage!)));
     }
   }
 
@@ -55,6 +56,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     const brandOrange = Color(0xFFFC7520);
     final auth = context.watch<AuthController>();
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: scheme.surface,
@@ -106,27 +108,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Inscription',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(fontWeight: FontWeight.w700),
+                        l10n.registerTitle,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    'Créer votre compte',
+                    l10n.registerHeader,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Commencez à suivre vos dépenses et revenus.',
+                    l10n.registerSubtitle,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Container(
@@ -149,7 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _nameController,
                             decoration: InputDecoration(
-                              labelText: 'Nom complet',
+                              labelText: l10n.fullName,
                               prefixIcon: const Icon(Icons.person_outline),
                               filled: true,
                               fillColor: scheme.surfaceContainerHighest,
@@ -160,7 +161,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Veuillez saisir votre nom';
+                                return l10n.enterName;
                               }
                               return null;
                             },
@@ -170,7 +171,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
-                              labelText: 'Email',
+                              labelText: l10n.emailLabel,
                               prefixIcon: const Icon(Icons.mail_outline),
                               filled: true,
                               fillColor: scheme.surfaceContainerHighest,
@@ -181,10 +182,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Veuillez saisir votre email';
+                                return l10n.enterEmail;
                               }
                               if (!value.contains('@')) {
-                                return 'Email invalide';
+                                return l10n.invalidEmail;
                               }
                               return null;
                             },
@@ -194,7 +195,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: _passwordController,
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
-                              labelText: 'Mot de passe',
+                              labelText: l10n.password,
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 onPressed: () => setState(
@@ -215,10 +216,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Veuillez saisir votre mot de passe';
+                                return l10n.enterPassword;
                               }
                               if (value.length < 6) {
-                                return 'Mot de passe trop court';
+                                return l10n.passwordTooShort;
                               }
                               return null;
                             },
@@ -228,7 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: _confirmController,
                             obscureText: _obscureConfirm,
                             decoration: InputDecoration(
-                              labelText: 'Confirmer le mot de passe',
+                              labelText: l10n.confirmPassword,
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 onPressed: () => setState(
@@ -249,10 +250,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Veuillez confirmer votre mot de passe';
+                                return l10n.confirmPasswordRequired;
                               }
                               if (value != _passwordController.text) {
-                                return 'Les mots de passe ne correspondent pas';
+                                return l10n.passwordMismatch;
                               }
                               return null;
                             },
@@ -263,11 +264,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: FilledButton(
                               style: FilledButton.styleFrom(
                                 backgroundColor: brandGreen,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                               ),
-                              onPressed:
-                                  auth.isLoading ? null : () => _submit(auth),
+                              onPressed: auth.isLoading
+                                  ? null
+                                  : () => _submit(auth),
                               child: auth.isLoading
                                   ? const SizedBox(
                                       height: 20,
@@ -277,7 +280,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Text('Créer un compte'),
+                                  : Text(l10n.createAccount),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -286,15 +289,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: brandOrange,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 side: BorderSide(color: brandOrange),
                               ),
                               onPressed: auth.isLoading
                                   ? null
                                   : () async {
-                                      final success =
-                                          await auth.signInWithGoogle();
+                                      final success = await auth
+                                          .signInWithGoogle();
                                       if (!context.mounted) return;
                                       if (success) {
                                         Navigator.pushReplacementNamed(
@@ -302,11 +306,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           AppRoutes.home,
                                         );
                                       } else if (auth.errorMessage != null) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           SnackBar(
-                                            content:
-                                                Text(auth.errorMessage!),
+                                            content: Text(auth.errorMessage!),
                                           ),
                                         );
                                       }
@@ -316,16 +320,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 width: 20,
                                 height: 20,
                               ),
-                              label: const Text('S\'inscrire avec Google'),
+                              label: Text(l10n.signUpWithGoogle),
                             ),
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'En créant un compte, vous acceptez nos conditions.',
+                            l10n.termsAccept,
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -336,12 +339,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Déjà inscrit ?',
+                        l10n.alreadyRegisteredQuestion,
                         style: TextStyle(color: scheme.onSurfaceVariant),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Se connecter'),
+                        child: Text(l10n.signIn),
                       ),
                     ],
                   ),
@@ -354,6 +357,3 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
-
-
-

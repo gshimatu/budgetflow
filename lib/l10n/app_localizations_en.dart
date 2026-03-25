@@ -565,4 +565,181 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get genericError => 'An error occurred.';
+
+  @override
+  String get appTagline => 'Manage your budget easily';
+
+  @override
+  String get loginTitle => 'Sign in';
+
+  @override
+  String get loginSubtitle => 'Take control of your finances.';
+
+  @override
+  String get forgotPassword => 'Forgot password?';
+
+  @override
+  String get signIn => 'Sign in';
+
+  @override
+  String get continueWithGoogle => 'Continue with Google';
+
+  @override
+  String get noAccountQuestion => 'Don\'t have an account?';
+
+  @override
+  String get createAccount => 'Create an account';
+
+  @override
+  String get resetPasswordTitle => 'Reset password';
+
+  @override
+  String get resetPasswordSent => 'Password reset email sent.';
+
+  @override
+  String get resetPasswordFailed => 'Unable to send the email.';
+
+  @override
+  String get registerTitle => 'Sign up';
+
+  @override
+  String get registerHeader => 'Create your account';
+
+  @override
+  String get registerSubtitle => 'Start tracking your expenses and income.';
+
+  @override
+  String get signUpWithGoogle => 'Sign up with Google';
+
+  @override
+  String get termsAccept => 'By creating an account, you agree to our terms.';
+
+  @override
+  String get alreadyRegisteredQuestion => 'Already registered?';
+
+  @override
+  String get signInToManageCategories => 'Sign in to manage your categories.';
+
+  @override
+  String get globalCategoriesTitle => 'Global categories';
+
+  @override
+  String get myCategoriesTitle => 'My categories';
+
+  @override
+  String get noGlobalCategories => 'No global categories available right now.';
+
+  @override
+  String get noUserCategories => 'No custom categories. Add one!';
+
+  @override
+  String get newCategory => 'New category';
+
+  @override
+  String get editCategoryTitle => 'Edit category';
+
+  @override
+  String get deleteCategoryTitle => 'Delete category';
+
+  @override
+  String get deleteCategoryWarning => 'Make sure this category is not in use.';
+
+  @override
+  String get adminNoGlobalCategories => 'No categories.';
+
+  @override
+  String get unknownDate => 'Unknown date';
+
+  @override
+  String get unknownValue => 'Unknown';
+
+  @override
+  String get adminDashboardTitle => 'Dashboard';
+
+  @override
+  String get adminGlobalCategoriesTitle => 'Global categories';
+
+  @override
+  String get adminGlobalCategoriesSubtitle => 'Create, edit, delete';
+
+  @override
+  String get adminGlobalStatsTitle => 'Global statistics';
+
+  @override
+  String get adminGlobalStatsSubtitle => 'System overview';
+
+  @override
+  String get adminManageUsersTitle => 'User management';
+
+  @override
+  String get adminManageUsersSubtitle => 'Roles and deletion';
+
+  @override
+  String get adminFeedbacksTitle => 'Feedback';
+
+  @override
+  String get adminFeedbacksSubtitle => 'Bugs and suggestions';
+
+  @override
+  String get adminFeedbackLoadFailed => 'Unable to load feedback.';
+
+  @override
+  String get adminNoFeedbacks => 'No feedback yet.';
+
+  @override
+  String get adminStatsLoadFailed => 'Error loading statistics.';
+
+  @override
+  String get adminStatsLoadFailedHint =>
+      'Check admin role and published rules.';
+
+  @override
+  String get adminStatsNoData =>
+      'No data detected. Check admin role, published rules, and Firebase project.';
+
+  @override
+  String get usersLabel => 'Users';
+
+  @override
+  String get adminsLabel => 'Admins';
+
+  @override
+  String get adminNoUsers => 'No users.';
+
+  @override
+  String get adminSignedUpLabel => 'Signed up:';
+
+  @override
+  String get adminDeleteSelfFailed => 'You cannot delete your own account.';
+
+  @override
+  String get adminRevokeAdmin => 'Revoke admin';
+
+  @override
+  String get adminMakeAdmin => 'Make admin';
+
+  @override
+  String get adminDeleteUserTitle => 'Delete user';
+
+  @override
+  String get adminDeleteUserWarning =>
+      'This action only deletes the Firestore profile.';
+
+  @override
+  String get adminSearchByEmail => 'Search by email';
+
+  @override
+  String get filterLabel => 'Filter';
+
+  @override
+  String get orderLabel => 'Order';
+
+  @override
+  String get sortRecent => 'Recent';
+
+  @override
+  String get sortOld => 'Oldest';
+
+  @override
+  String get detailsLabel => 'Details:';
 }

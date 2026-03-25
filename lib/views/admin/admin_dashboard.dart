@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../routes/app_routes.dart';
 
@@ -7,45 +8,46 @@ class AdminDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin')),
+      appBar: AppBar(title: Text(l10n.navAdmin)),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Tableau de bord',
+              l10n.adminDashboardTitle,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
             ),
             const SizedBox(height: 16),
             _AdminTile(
-              title: 'Catégories globales',
-              subtitle: 'Créer, modifier, supprimer',
+              title: l10n.adminGlobalCategoriesTitle,
+              subtitle: l10n.adminGlobalCategoriesSubtitle,
               icon: Icons.category_outlined,
               onTap: () =>
                   Navigator.pushNamed(context, AppRoutes.adminCategories),
             ),
             const SizedBox(height: 12),
             _AdminTile(
-              title: 'Statistiques globales',
-              subtitle: 'Vue d’ensemble du système',
+              title: l10n.adminGlobalStatsTitle,
+              subtitle: l10n.adminGlobalStatsSubtitle,
               icon: Icons.insights_outlined,
               onTap: () => Navigator.pushNamed(context, AppRoutes.adminStats),
             ),
             const SizedBox(height: 12),
             _AdminTile(
-              title: 'Gestion des utilisateurs',
-              subtitle: 'Rôles et suppression',
+              title: l10n.adminManageUsersTitle,
+              subtitle: l10n.adminManageUsersSubtitle,
               icon: Icons.people_outline,
               onTap: () => Navigator.pushNamed(context, AppRoutes.adminUsers),
             ),
             const SizedBox(height: 12),
             _AdminTile(
-              title: 'Commentaires',
-              subtitle: 'Bugs et suggestions',
+              title: l10n.adminFeedbacksTitle,
+              subtitle: l10n.adminFeedbacksSubtitle,
               icon: Icons.chat_bubble_outline,
               onTap: () =>
                   Navigator.pushNamed(context, AppRoutes.adminFeedbacks),
@@ -72,6 +74,7 @@ class _AdminTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../services/firestore_service.dart';
 
@@ -25,10 +26,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Utilisateurs')),
+      appBar: AppBar(title: Text(l10n.usersLabel)),
       body: Column(
         children: [
           _SearchFilters(
@@ -48,20 +50,21 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                 }
                 final users = _applyFilters(snapshot.data ?? []);
                 if (users.isEmpty) {
-                  return const Center(child: Text('Aucun utilisateur.'));
+                  return Center(child: Text(l10n.adminNoUsers));
                 }
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                   itemCount: users.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final user = users[index];
                     final uid = user['id'] as String;
                     final email = user['email'] as String? ?? '—';
                     final role = user['role'] as String? ?? 'user';
                     final createdAt = user['createdAt'];
-                    final createdDate =
-                        createdAt is Timestamp ? createdAt.toDate() : null;
+                    final createdDate = createdAt is Timestamp
+                        ? createdAt.toDate()
+                        : null;
 
                     return ListTile(
                       tileColor: Theme.of(context).colorScheme.surface,
@@ -72,7 +75,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                       subtitle: Text(
                         createdDate == null
                             ? 'Inscrit: —'
-                            : 'Inscrit: ${DateFormat('dd MMM yyyy').format(createdDate)}',
+                            : '${l10n.adminSignedUpLabel} ${DateFormat('dd MMM yyyy').format(createdDate)}',
                       ),
                       leading: CircleAvatar(
                         child: Text(
@@ -83,14 +86,15 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                         onSelected: (value) async {
                           if (value == 'toggle') {
                             final newRole = role == 'admin' ? 'user' : 'admin';
-                            await FirestoreService().updateUserRole(uid, newRole);
+                            await FirestoreService().updateUserRole(
+                              uid,
+                              newRole,
+                            );
                           } else if (value == 'delete') {
                             if (uid == currentUid) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Impossible de supprimer votre compte.',
-                                  ),
+                                SnackBar(
+                                  content: Text(l10n.adminDeleteSelfFailed),
                                 ),
                               );
                               return;
@@ -107,12 +111,12 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                             child: Text(
                               role == 'admin'
                                   ? 'Révoquer admin'
-                                  : 'Passer admin',
+                                  : l10n.adminMakeAdmin,
                             ),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'delete',
-                            child: Text('Supprimer'),
+                            child: Text(l10n.delete),
                           ),
                         ],
                       ),
@@ -133,8 +137,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
       final email = (user['email'] as String? ?? '').toLowerCase();
       final role = (user['role'] as String? ?? 'user');
       final matchesQuery = query.isEmpty || email.contains(query);
-      final matchesRole =
-          _roleFilter == 'all' || _roleFilter == role;
+      final matchesRole = _roleFilter == 'all' || _roleFilter == role;
       return matchesQuery && matchesRole;
     }).toList();
 
@@ -153,25 +156,24 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
   }
 
   Future<bool> _confirmDelete(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Supprimer l’utilisateur'),
-          content: const Text(
-            'Cette action supprime uniquement le profil Firestore.',
-          ),
+          title: Text(l10n.adminDeleteUserTitle),
+          content: Text(l10n.adminDeleteUserWarning),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFEF4444),
               ),
-              child: const Text('Supprimer'),
+              child: Text(l10n.delete),
             ),
           ],
         );
@@ -200,6 +202,7 @@ class _SearchFilters extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
@@ -209,7 +212,7 @@ class _SearchFilters extends StatelessWidget {
             controller: controller,
             onChanged: onQueryChanged,
             decoration: InputDecoration(
-              hintText: 'Rechercher par email',
+              hintText: l10n.adminSearchByEmail,
               prefixIcon: const Icon(Icons.search),
               filled: true,
               fillColor: scheme.surfaceContainerHighest,
@@ -225,17 +228,23 @@ class _SearchFilters extends StatelessWidget {
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: roleFilter,
-                  items: const [
-                    DropdownMenuItem(value: 'all', child: Text('Tous')),
-                    DropdownMenuItem(value: 'admin', child: Text('Admins')),
-                    DropdownMenuItem(value: 'user', child: Text('Utilisateurs')),
+                  items: [
+                    DropdownMenuItem(value: 'all', child: Text(l10n.filterAll)),
+                    DropdownMenuItem(
+                      value: 'admin',
+                      child: Text(l10n.adminsLabel),
+                    ),
+                    DropdownMenuItem(
+                      value: 'user',
+                      child: Text(l10n.usersLabel),
+                    ),
                   ],
                   onChanged: (value) {
                     if (value == null) return;
                     onRoleChanged(value);
                   },
                   decoration: InputDecoration(
-                    labelText: 'Filtre',
+                    labelText: l10n.filterLabel,
                     filled: true,
                     fillColor: scheme.surfaceContainerHighest,
                     border: OutlineInputBorder(
@@ -249,16 +258,19 @@ class _SearchFilters extends StatelessWidget {
               Expanded(
                 child: DropdownButtonFormField<bool>(
                   value: sortAsc,
-                  items: const [
-                    DropdownMenuItem(value: false, child: Text('Récent')),
-                    DropdownMenuItem(value: true, child: Text('Ancien')),
+                  items: [
+                    DropdownMenuItem(
+                      value: false,
+                      child: Text(l10n.sortRecent),
+                    ),
+                    DropdownMenuItem(value: true, child: Text(l10n.sortOld)),
                   ],
                   onChanged: (value) {
                     if (value == null) return;
                     onSortChanged(value);
                   },
                   decoration: InputDecoration(
-                    labelText: 'Ordre',
+                    labelText: l10n.orderLabel,
                     filled: true,
                     fillColor: scheme.surfaceContainerHighest,
                     border: OutlineInputBorder(

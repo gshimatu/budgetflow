@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../services/firestore_service.dart';
 
@@ -8,8 +9,9 @@ class GlobalStatsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Statistiques globales')),
+      appBar: AppBar(title: Text(l10n.adminGlobalStatsTitle)),
       body: FutureBuilder<Map<String, dynamic>>(
         future: FirestoreService().getGlobalStats(),
         builder: (context, snapshot) {
@@ -21,9 +23,9 @@ class GlobalStatsScreen extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Erreur de chargement des statistiques.\n'
-                  'Verifie le role admin et les regles publiees.\n'
-                  'Details: ${snapshot.error}',
+                  '${l10n.adminStatsLoadFailed}\n'
+                  '${l10n.adminStatsLoadFailedHint}\n'
+                  '${l10n.detailsLabel} ${snapshot.error}',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -45,20 +47,17 @@ class GlobalStatsScreen extends StatelessWidget {
                         .surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'Aucune donnee detectee. Verifie le role admin, '
-                    'les regles publiees et le projet Firebase utilise.',
-                  ),
+                  child: Text(l10n.adminStatsNoData),
                 ),
               _StatCard(
-                title: 'Utilisateurs',
+                title: l10n.usersLabel,
                 value: users.toString(),
                 icon: Icons.people_outline,
                 color: const Color(0xFF0BC1DE),
               ),
               const SizedBox(height: 12),
               _StatCard(
-                title: 'Transactions',
+                title: l10n.transactions,
                 value: transactions.toString(),
                 icon: Icons.swap_horiz,
                 color: const Color(0xFF6366F1),
@@ -86,6 +85,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),

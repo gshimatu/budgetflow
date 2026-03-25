@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../models/category_model.dart';
 import '../../services/firestore_service.dart';
@@ -8,9 +9,10 @@ class ManageCategoriesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Catégories globales'),
+        title: Text(l10n.adminGlobalCategoriesTitle),
         actions: [
           IconButton(
             onPressed: () => _openCategoryForm(context),
@@ -26,12 +28,12 @@ class ManageCategoriesScreen extends StatelessWidget {
           }
           final categories = snapshot.data ?? [];
           if (categories.isEmpty) {
-            return const Center(child: Text('Aucune catégorie.'));
+            return Center(child: Text(l10n.adminNoGlobalCategories));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(20),
             itemCount: categories.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final category = categories[index];
               return ListTile(
@@ -41,7 +43,7 @@ class ManageCategoriesScreen extends StatelessWidget {
                 ),
                 title: Text(category.name),
                 subtitle: Text(
-                  category.type == 'income' ? 'Revenu' : 'Dépense',
+                  category.type == 'income' ? l10n.income : l10n.expense,
                 ),
                 trailing: PopupMenuButton<String>(
                   onSelected: (value) {
@@ -51,9 +53,9 @@ class ManageCategoriesScreen extends StatelessWidget {
                       _confirmDelete(context, category);
                     }
                   },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'edit', child: Text('Modifier')),
-                    PopupMenuItem(value: 'delete', child: Text('Supprimer')),
+                  itemBuilder: (context) => [
+                    PopupMenuItem(value: 'edit', child: Text(l10n.edit)),
+                    PopupMenuItem(value: 'delete', child: Text(l10n.delete)),
                   ],
                 ),
               );
@@ -91,6 +93,7 @@ class ManageCategoriesScreen extends StatelessWidget {
             ),
             child: StatefulBuilder(
               builder: (context, setState) {
+                final l10n = AppLocalizations.of(context)!;
                 return Form(
                   key: formKey,
                   child: Column(
@@ -100,11 +103,9 @@ class ManageCategoriesScreen extends StatelessWidget {
                         children: [
                           Text(
                             existing == null
-                                ? 'Nouvelle catégorie'
-                                : 'Modifier la catégorie',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                                ? l10n.newCategory
+                                : l10n.editCategoryTitle,
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           const Spacer(),
@@ -118,12 +119,12 @@ class ManageCategoriesScreen extends StatelessWidget {
                       TextFormField(
                         controller: nameController,
                         decoration: InputDecoration(
-                          labelText: 'Nom',
+                          labelText: l10n.categoryName,
                           prefixIcon: const Icon(Icons.category_outlined),
                           filled: true,
-                          fillColor: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -131,7 +132,7 @@ class ManageCategoriesScreen extends StatelessWidget {
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Veuillez saisir un nom';
+                            return l10n.enterCategoryName;
                           }
                           return null;
                         },
@@ -139,14 +140,14 @@ class ManageCategoriesScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: type,
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'expense',
-                            child: Text('Dépense'),
+                            child: Text(l10n.expense),
                           ),
                           DropdownMenuItem(
                             value: 'income',
-                            child: Text('Revenu'),
+                            child: Text(l10n.income),
                           ),
                         ],
                         onChanged: (value) {
@@ -154,11 +155,11 @@ class ManageCategoriesScreen extends StatelessWidget {
                           setState(() => type = value);
                         },
                         decoration: InputDecoration(
-                          labelText: 'Type',
+                          labelText: l10n.type,
                           filled: true,
-                          fillColor: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -177,12 +178,14 @@ class ManageCategoriesScreen extends StatelessWidget {
                               id: existing?.id ?? '',
                               name: nameController.text.trim(),
                               type: type,
-                              order: existing?.order ??
+                              order:
+                                  existing?.order ??
                                   DateTime.now().millisecondsSinceEpoch,
                             );
                             if (existing == null) {
-                              await FirestoreService()
-                                  .addGlobalCategory(category);
+                              await FirestoreService().addGlobalCategory(
+                                category,
+                              );
                             } else {
                               await FirestoreService().updateGlobalCategory(
                                 existing.id,
@@ -193,8 +196,9 @@ class ManageCategoriesScreen extends StatelessWidget {
                               Navigator.pop(context);
                             }
                           },
-                          child:
-                              Text(existing == null ? 'Ajouter' : 'Mettre à jour'),
+                          child: Text(
+                            existing == null ? 'Ajouter' : l10n.update,
+                          ),
                         ),
                       ),
                     ],
@@ -212,25 +216,24 @@ class ManageCategoriesScreen extends StatelessWidget {
     BuildContext context,
     CategoryModel category,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Supprimer la catégorie'),
-          content: const Text(
-            'Assurez-vous que cette catégorie n\'est pas utilisée.',
-          ),
+          title: Text(l10n.deleteCategoryTitle),
+          content: Text(l10n.deleteCategoryWarning),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFEF4444),
               ),
-              child: const Text('Supprimer'),
+              child: Text(l10n.delete),
             ),
           ],
         );

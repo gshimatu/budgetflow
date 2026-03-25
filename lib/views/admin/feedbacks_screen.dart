@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../services/firestore_service.dart';
 
@@ -8,8 +9,9 @@ class FeedbacksScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Commentaires')),
+      appBar: AppBar(title: Text(l10n.comments)),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: FirestoreService().watchFeedbacks(),
         builder: (context, snapshot) {
@@ -17,34 +19,33 @@ class FeedbacksScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return const Center(
-              child: Text('Impossible de charger les commentaires.'),
-            );
+            return Center(child: Text(l10n.adminFeedbackLoadFailed));
           }
           final items = snapshot.data ?? [];
           if (items.isEmpty) {
-            return const Center(
-              child: Text('Aucun commentaire pour le moment.'),
-            );
+            return Center(child: Text(l10n.adminNoFeedbacks));
           }
 
           return ListView.separated(
             padding: const EdgeInsets.all(20),
             itemBuilder: (context, index) {
               final item = items[index];
-              final type = (item['type'] as String?) ?? 'Commentaire';
+              final type = (item['type'] as String?) ?? 'comment';
               final message = (item['message'] as String?) ?? '';
-              final email = (item['email'] as String?) ?? 'Utilisateur';
+              final email = (item['email'] as String?) ?? l10n.defaultUserName;
               final createdAt = item['createdAt'];
-              String dateLabel = 'Date inconnue';
+              String dateLabel = l10n.unknownDate;
               if (createdAt is DateTime) {
                 dateLabel = DateFormat('dd MMM yyyy HH:mm').format(createdAt);
               } else if (createdAt != null) {
                 try {
-                  dateLabel = DateFormat('dd MMM yyyy HH:mm')
-                      .format(createdAt.toDate());
+                  dateLabel = DateFormat(
+                    'dd MMM yyyy HH:mm',
+                  ).format(createdAt.toDate());
                 } catch (_) {}
               }
+
+              final typeLabel = _labelForType(type);
 
               return Container(
                 padding: const EdgeInsets.all(16),
@@ -74,21 +75,22 @@ class FeedbacksScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            type,
-                            style:
-                                Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: _colorForType(type),
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                            typeLabel,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: _colorForType(type),
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
                         ),
                         const Spacer(),
                         Text(
                           dateLabel,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                         ),
                       ],
@@ -97,8 +99,8 @@ class FeedbacksScreen extends StatelessWidget {
                     Text(
                       email,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -109,12 +111,36 @@ class FeedbacksScreen extends StatelessWidget {
                 ),
               );
             },
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemCount: items.length,
           );
         },
       ),
     );
+  }
+
+  String _labelForType(String type) {
+    switch (type) {
+      case 'bug':
+        return 'Bug';
+      case 'feature':
+        return 'Feature';
+      case 'comment':
+      default:
+        return 'Comment';
+    }
+  }
+
+  Color _colorForType(String type) {
+    switch (type) {
+      case 'bug':
+        return Colors.red;
+      case 'feature':
+        return Colors.blue;
+      case 'comment':
+      default:
+        return Colors.grey;
+    }
   }
 }
 

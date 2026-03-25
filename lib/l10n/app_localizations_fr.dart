@@ -573,4 +573,187 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get genericError => 'Une erreur est survenue.';
+
+  @override
+  String get appTagline => 'Gerer votre budget facilement';
+
+  @override
+  String get loginTitle => 'Connexion';
+
+  @override
+  String get loginSubtitle => 'Reprenez le controle de vos finances.';
+
+  @override
+  String get forgotPassword => 'Mot de passe oublie ?';
+
+  @override
+  String get signIn => 'Se connecter';
+
+  @override
+  String get continueWithGoogle => 'Continuer avec Google';
+
+  @override
+  String get noAccountQuestion => 'Pas de compte ?';
+
+  @override
+  String get createAccount => 'Creer un compte';
+
+  @override
+  String get resetPasswordTitle => 'Reinitialiser le mot de passe';
+
+  @override
+  String get resetPasswordSent => 'Email de reinitialisation envoye.';
+
+  @override
+  String get resetPasswordFailed => 'Impossible d\'envoyer l\'email.';
+
+  @override
+  String get registerTitle => 'Inscription';
+
+  @override
+  String get registerHeader => 'Creer votre compte';
+
+  @override
+  String get registerSubtitle => 'Commencez a suivre vos depenses et revenus.';
+
+  @override
+  String get signUpWithGoogle => 'S\'inscrire avec Google';
+
+  @override
+  String get termsAccept =>
+      'En creant un compte, vous acceptez nos conditions.';
+
+  @override
+  String get alreadyRegisteredQuestion => 'Deja inscrit ?';
+
+  @override
+  String get signInToManageCategories =>
+      'Connectez-vous pour gerer vos categories.';
+
+  @override
+  String get globalCategoriesTitle => 'Categories globales';
+
+  @override
+  String get myCategoriesTitle => 'Mes categories';
+
+  @override
+  String get noGlobalCategories =>
+      'Aucune categorie globale disponible pour le moment.';
+
+  @override
+  String get noUserCategories =>
+      'Aucune categorie personnalisee. Ajoutez-en une !';
+
+  @override
+  String get newCategory => 'Nouvelle categorie';
+
+  @override
+  String get editCategoryTitle => 'Modifier la categorie';
+
+  @override
+  String get deleteCategoryTitle => 'Supprimer la categorie';
+
+  @override
+  String get deleteCategoryWarning =>
+      'Assurez-vous que cette categorie n\'est pas utilisee.';
+
+  @override
+  String get adminNoGlobalCategories => 'Aucune categorie.';
+
+  @override
+  String get unknownDate => 'Date inconnue';
+
+  @override
+  String get unknownValue => 'Inconnu';
+
+  @override
+  String get adminDashboardTitle => 'Tableau de bord';
+
+  @override
+  String get adminGlobalCategoriesTitle => 'Categories globales';
+
+  @override
+  String get adminGlobalCategoriesSubtitle => 'Creer, modifier, supprimer';
+
+  @override
+  String get adminGlobalStatsTitle => 'Statistiques globales';
+
+  @override
+  String get adminGlobalStatsSubtitle => 'Vue d\'ensemble du systeme';
+
+  @override
+  String get adminManageUsersTitle => 'Gestion des utilisateurs';
+
+  @override
+  String get adminManageUsersSubtitle => 'Roles et suppression';
+
+  @override
+  String get adminFeedbacksTitle => 'Commentaires';
+
+  @override
+  String get adminFeedbacksSubtitle => 'Bugs et suggestions';
+
+  @override
+  String get adminFeedbackLoadFailed =>
+      'Impossible de charger les commentaires.';
+
+  @override
+  String get adminNoFeedbacks => 'Aucun commentaire pour le moment.';
+
+  @override
+  String get adminStatsLoadFailed => 'Erreur de chargement des statistiques.';
+
+  @override
+  String get adminStatsLoadFailedHint =>
+      'Verifie le role admin et les regles publiees.';
+
+  @override
+  String get adminStatsNoData =>
+      'Aucune donnee detectee. Verifie le role admin, les regles publiees et le projet Firebase utilise.';
+
+  @override
+  String get usersLabel => 'Utilisateurs';
+
+  @override
+  String get adminsLabel => 'Admins';
+
+  @override
+  String get adminNoUsers => 'Aucun utilisateur.';
+
+  @override
+  String get adminSignedUpLabel => 'Inscrit :';
+
+  @override
+  String get adminDeleteSelfFailed => 'Impossible de supprimer votre compte.';
+
+  @override
+  String get adminRevokeAdmin => 'Revoquer admin';
+
+  @override
+  String get adminMakeAdmin => 'Passer admin';
+
+  @override
+  String get adminDeleteUserTitle => 'Supprimer l\'utilisateur';
+
+  @override
+  String get adminDeleteUserWarning =>
+      'Cette action supprime uniquement le profil Firestore.';
+
+  @override
+  String get adminSearchByEmail => 'Rechercher par email';
+
+  @override
+  String get filterLabel => 'Filtre';
+
+  @override
+  String get orderLabel => 'Ordre';
+
+  @override
+  String get sortRecent => 'Recent';
+
+  @override
+  String get sortOld => 'Ancien';
+
+  @override
+  String get detailsLabel => 'Details :';
 }

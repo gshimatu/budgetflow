@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../routes/app_routes.dart';
@@ -52,24 +53,25 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (context) {
         final scheme = Theme.of(context).colorScheme;
+        final l10n = AppLocalizations.of(context)!;
         return AlertDialog(
-          title: const Text('Reinitialiser le mot de passe'),
+          title: Text(l10n.resetPasswordTitle),
           content: Form(
             key: formKey,
             child: TextFormField(
               controller: controller,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
-                labelText: 'Email',
+                labelText: l10n.emailLabel,
                 filled: true,
                 fillColor: scheme.surfaceContainerHighest,
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Entrez votre email';
+                  return l10n.enterEmail;
                 }
                 if (!value.contains('@')) {
-                  return 'Email invalide';
+                  return l10n.invalidEmail;
                 }
                 return null;
               },
@@ -78,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () async {
@@ -88,20 +90,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   if (!mounted) return;
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Email de reinitialisation envoye.'),
+                    SnackBar(
+                      content: Text(l10n.resetPasswordSent),
                     ),
                   );
                 } catch (_) {
                   if (!mounted) return;
                   final message = auth.errorMessage ??
-                      'Impossible d\'envoyer l\'email.';
+                      l10n.resetPasswordFailed;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(message)),
                   );
                 }
               },
-              child: const Text('Envoyer'),
+              child: Text(l10n.send),
             ),
           ],
         );
@@ -116,6 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
     const brandOrange = Color(0xFFFC7520);
     final auth = context.watch<AuthController>();
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: scheme.surface,
@@ -185,14 +188,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'BudgetFlow',
+                            l10n.appTitle,
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineSmall
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           Text(
-                            'Gérez votre budget facilement',
+                            l10n.appTagline,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   color: scheme.onSurfaceVariant,
                                 ),
@@ -203,14 +206,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 28),
                   Text(
-                    'Connexion',
+                    l10n.loginTitle,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Reprenez le contrôle de vos finances.',
+                    l10n.loginSubtitle,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -237,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
-                              labelText: 'Email',
+                              labelText: l10n.emailLabel,
                               prefixIcon: const Icon(Icons.mail_outline),
                               filled: true,
                               fillColor: scheme.surfaceContainerHighest,
@@ -248,10 +251,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Veuillez saisir votre email';
+                                return l10n.enterEmail;
                               }
                               if (!value.contains('@')) {
-                                return 'Email invalide';
+                                return l10n.invalidEmail;
                               }
                               return null;
                             },
@@ -261,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _passwordController,
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
-                              labelText: 'Mot de passe',
+                              labelText: l10n.password,
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -276,10 +279,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Veuillez saisir votre mot de passe';
+                                return l10n.enterPassword;
                               }
                               if (value.length < 6) {
-                                return 'Mot de passe trop court';
+                                return l10n.passwordTooShort;
                               }
                               return null;
                             },
@@ -290,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: TextButton(
                               onPressed: () => _openResetPassword(auth),
                               child: Text(
-                                'Mot de passe oublié ?',
+                                l10n.forgotPassword,
                                 style: TextStyle(color: scheme.onSurfaceVariant),
                               ),
                             ),
@@ -315,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Text('Se connecter'),
+                                  : Text(l10n.signIn),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -354,7 +357,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 width: 20,
                                 height: 20,
                               ),
-                              label: const Text('Continuer avec Google'),
+                              label: Text(l10n.continueWithGoogle),
                             ),
                           ),
                         ],
@@ -366,14 +369,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Pas de compte ?',
+                        l10n.noAccountQuestion,
                         style: TextStyle(color: scheme.onSurfaceVariant),
                       ),
                       TextButton(
                         onPressed: () {
                           Navigator.pushNamed(context, AppRoutes.register);
                         },
-                        child: const Text('Créer un compte'),
+                        child: Text(l10n.createAccount),
                       ),
                     ],
                   ),

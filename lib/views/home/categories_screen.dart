@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../models/category_model.dart';
 import '../../services/firestore_service.dart';
@@ -21,12 +22,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    final l10n = AppLocalizations.of(context)!;
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Catégories')),
-        body: const Center(
-          child: Text('Connectez-vous pour gérer vos catégories.'),
-        ),
+        appBar: AppBar(title: Text(l10n.navCategories)),
+        body: Center(child: Text(l10n.signInToManageCategories)),
       );
     }
 
@@ -34,7 +34,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     return Scaffold(
       backgroundColor: scheme.surface,
       appBar: AppBar(
-        title: const Text('Catégories'),
+        title: Text(l10n.navCategories),
         actions: [
           IconButton(
             onPressed: () => _openAddCategory(context, user.uid),
@@ -45,7 +45,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         children: [
-          _SectionTitle(title: 'Catégories globales'),
+          _SectionTitle(title: l10n.globalCategoriesTitle),
           const SizedBox(height: 12),
           StreamBuilder<List<CategoryModel>>(
             stream: FirestoreService().watchGlobalCategories(),
@@ -55,15 +55,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               }
               final categories = snapshot.data ?? [];
               if (categories.isEmpty) {
-                return const Text(
-                  'Aucune catégorie globale disponible pour le moment.',
-                );
+                return Text(l10n.noGlobalCategories);
               }
               return _CategoryGrid(categories: categories);
             },
           ),
           const SizedBox(height: 20),
-          _SectionTitle(title: 'Mes catégories'),
+          _SectionTitle(title: l10n.myCategoriesTitle),
           const SizedBox(height: 12),
           StreamBuilder<List<CategoryModel>>(
             stream: FirestoreService().watchUserCategories(user.uid),
@@ -73,9 +71,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               }
               final categories = snapshot.data ?? [];
               if (categories.isEmpty) {
-                return const Text(
-                  'Aucune catégorie personnalisée. Ajoutez-en une !',
-                );
+                return Text(l10n.noUserCategories);
               }
               return _CategoryGrid(categories: categories);
             },
@@ -84,7 +80,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddCategory(context, user.uid),
-        label: const Text('Ajouter'),
+        label: Text(l10n.add),
         icon: const Icon(Icons.add),
       ),
     );
@@ -114,6 +110,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             ),
             child: StatefulBuilder(
               builder: (context, setState) {
+                final l10n = AppLocalizations.of(context)!;
                 return Form(
                   key: formKey,
                   child: Column(
@@ -122,10 +119,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       Row(
                         children: [
                           Text(
-                            'Nouvelle catégorie',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            l10n.newCategory,
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           const Spacer(),
@@ -139,7 +134,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       TextFormField(
                         controller: nameController,
                         decoration: InputDecoration(
-                          labelText: 'Nom de la catégorie',
+                          labelText: l10n.categoryName,
                           prefixIcon: const Icon(Icons.category_outlined),
                           filled: true,
                           fillColor: const Color(0xFFF2F6FA),
@@ -148,9 +143,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             borderSide: BorderSide.none,
                           ),
                         ),
+                        initialValue: '',
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Veuillez saisir un nom';
+                            return l10n.enterCategoryName;
                           }
                           return null;
                         },
@@ -158,14 +154,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: type,
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'expense',
-                            child: Text('Dépense'),
+                            child: Text(l10n.expense),
                           ),
                           DropdownMenuItem(
                             value: 'income',
-                            child: Text('Revenu'),
+                            child: Text(l10n.income),
                           ),
                         ],
                         onChanged: (value) {
@@ -173,7 +169,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                           setState(() => type = value);
                         },
                         decoration: InputDecoration(
-                          labelText: 'Type',
+                          labelText: l10n.type,
                           filled: true,
                           fillColor: const Color(0xFFF2F6FA),
                           border: OutlineInputBorder(
@@ -198,13 +194,15 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               userId: uid,
                               order: DateTime.now().millisecondsSinceEpoch,
                             );
-                            await FirestoreService()
-                                .addUserCategory(uid, category);
+                            await FirestoreService().addUserCategory(
+                              uid,
+                              category,
+                            );
                             if (context.mounted) {
                               Navigator.pop(context);
                             }
                           },
-                          child: const Text('Ajouter'),
+                          child: Text(l10n.add),
                         ),
                       ),
                     ],
@@ -233,13 +231,13 @@ class _CategoryGrid extends StatelessWidget {
           .map(
             (cat) => Chip(
               label: Text(cat.name),
-              backgroundColor:
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.12),
               side: BorderSide(
-                color: Theme.of(context)
-                    .colorScheme
-                    .primary
-                    .withValues(alpha: 0.3),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.3),
               ),
             ),
           )
@@ -257,9 +255,9 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
     );
   }
 }
