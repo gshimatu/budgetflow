@@ -832,4 +832,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exportCancel => 'Cancel';
+
+  @override
+  String get exportOpenFolder => 'Open folder';
+
+  @override
+  String get exportPreviewFiles => 'Files';
 }

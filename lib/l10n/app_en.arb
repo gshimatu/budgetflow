@@ -268,5 +268,7 @@
   "exportPreviewDetails": "Detail rows",
   "exportSaveLocation": "Saved to",
   "exportStartExport": "Export",
-  "exportCancel": "Cancel"
+  "exportCancel": "Cancel",
+  "exportOpenFolder": "Open folder",
+  "exportPreviewFiles": "Files"
 }

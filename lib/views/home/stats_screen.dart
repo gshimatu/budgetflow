@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:budgetflow/l10n/app_localizations.dart';
 
@@ -145,7 +147,6 @@ class _StatsScreenState extends State<StatsScreen> {
       ),
     );
   }
-
   Future<void> _exportCsv(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).toString();
@@ -181,7 +182,7 @@ class _StatsScreenState extends State<StatsScreen> {
     final summary = _buildSummary(filtered);
     final monthly = _buildMonthlySummary(filtered);
 
-        final summaryCsv = _buildSummaryCsv(
+    final summaryCsv = _buildSummaryCsv(
       l10n,
       locale,
       picked,
@@ -223,15 +224,115 @@ class _StatsScreenState extends State<StatsScreen> {
         text: l10n.exportCsv,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${l10n.exportSaved} ${l10n.exportSaveLocation}: ${dir.path}')),
+      await _showExportSaved(
+        context: context,
+        l10n: l10n,
+        directory: dir,
       );
     } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.exportFailed)),
-      );
+      try {
+        final safeStart = DateFormat('yyyyMMdd').format(start);
+        final safeEnd = DateFormat('yyyyMMdd').format(end);
+        final summaryBytes = utf8.encode('\uFEFF$summaryCsv');
+        final detailsBytes = utf8.encode('\uFEFF$detailsCsv');
+        await Share.shareXFiles(
+          [
+            XFile.fromData(
+              summaryBytes,
+              mimeType: 'text/csv',
+              name: 'budgetflow_summary_${safeStart}_${safeEnd}.csv',
+            ),
+            XFile.fromData(
+              detailsBytes,
+              mimeType: 'text/csv',
+              name: 'budgetflow_details_${safeStart}_${safeEnd}.csv',
+            ),
+          ],
+          text: l10n.exportCsv,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.exportSaved)),
+        );
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.exportFailed)),
+        );
+      }
     }
+  }
+
+  Future<bool> _showExportPreview({
+    required BuildContext context,
+    required AppLocalizations l10n,
+    required DateTimeRange range,
+    required int summaryRows,
+    required int detailsRows,
+  }) async {
+    final locale = Localizations.localeOf(context).toString();
+    final rangeLabel =
+        '${DateFormat('yyyy-MM-dd', locale).format(range.start)} ? ${DateFormat('yyyy-MM-dd', locale).format(range.end)}';
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.exportPreviewTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${l10n.exportPreviewRange}: $rangeLabel'),
+              const SizedBox(height: 8),
+              Text('${l10n.exportPreviewSummary}: $summaryRows'),
+              Text('${l10n.exportPreviewDetails}: $detailsRows'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.exportCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.exportStartExport),
+            ),
+          ],
+        );
+      },
+    );
+
+    return result == true;
+  }
+
+  Future<void> _showExportSaved({
+    required BuildContext context,
+    required AppLocalizations l10n,
+    required Directory directory,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.exportSaved),
+          content: Text('${l10n.exportSaveLocation}: ${directory.path}'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.ok),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await OpenFilex.open(directory.path);
+              },
+              child: Text(l10n.exportOpenFolder),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -1297,6 +1398,13 @@ Future<Directory> _getExportDirectory() async {
   }
   return getApplicationDocumentsDirectory();
 }
+
+
+
+
+
+
+
 
 
 

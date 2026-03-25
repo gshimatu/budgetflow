@@ -268,5 +268,7 @@
   "exportPreviewDetails": "Lignes details",
   "exportSaveLocation": "Enregistre dans",
   "exportStartExport": "Exporter",
-  "exportCancel": "Annuler"
+  "exportCancel": "Annuler",
+  "exportOpenFolder": "Ouvrir le dossier",
+  "exportPreviewFiles": "Fichiers"
 }

@@ -846,4 +846,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get exportCancel => 'Annuler';
+
+  @override
+  String get exportOpenFolder => 'Ouvrir le dossier';
+
+  @override
+  String get exportPreviewFiles => 'Fichiers';
 }

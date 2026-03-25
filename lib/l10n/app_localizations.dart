@@ -1699,6 +1699,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get exportCancel;
+
+  /// No description provided for @exportOpenFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open folder'**
+  String get exportOpenFolder;
+
+  /// No description provided for @exportPreviewFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get exportPreviewFiles;
 }
 
 class _AppLocalizationsDelegate
