@@ -12,5 +12,9 @@
   "update": "Mettre a jour",
   "delete": "Supprimer",
   "confirm": "Confirmer",
-  "ok": "OK"
+  "ok": "OK",
+
+  "defaultLanguage": "Langue de l'application",
+  "languageUpdated": "Langue mise a jour.",
+  "languageUpdateFailed": "Mise a jour impossible."
 }

@@ -30,7 +30,8 @@ class FirestoreService {
       final needsCurrency = prefs != null && prefs['currency'] == null;
       final needsBase = prefs != null && prefs['baseCurrency'] == null;
       final needsRate = prefs != null && prefs['rate'] == null;
-      if (needsPrefs || needsCurrency || needsBase || needsRate) {
+      final needsLanguage = prefs != null && prefs['language'] == null;
+      if (needsPrefs || needsCurrency || needsBase || needsRate || needsLanguage) {
         await _db.collection('users').doc(uid).set({
           'preferences': {
             'weeklyReport': prefs?['weeklyReport'] ?? false,
@@ -39,6 +40,7 @@ class FirestoreService {
             'currency': prefs?['currency'] ?? 'CDF',
             'baseCurrency': prefs?['baseCurrency'] ?? (prefs?['currency'] ?? 'CDF'),
             'rate': (prefs?['rate'] as num?)?.toDouble() ?? 1.0,
+            'language': prefs?['language'] ?? 'fr',
           },
         }, SetOptions(merge: true));
       }
@@ -57,6 +59,7 @@ class FirestoreService {
         'currency': 'CDF',
         'baseCurrency': 'CDF',
         'rate': 1.0,
+        'language': 'fr',
       },
     });
   }
@@ -93,6 +96,7 @@ class FirestoreService {
     String? currency,
     String? baseCurrency,
     double? rate,
+    String? language,
   }) async {
     final updates = <String, dynamic>{};
     if (weeklyReport != null) {
@@ -113,6 +117,9 @@ class FirestoreService {
     if (rate != null) {
       updates['preferences.rate'] = rate;
     }
+    if (language != null) {
+      updates['preferences.language'] = language;
+    }
     if (updates.isEmpty) return;
 
     // S'assure que l'objet preferences existe sans conflit de champs
@@ -125,6 +132,7 @@ class FirestoreService {
         'currency': 'CDF',
         'baseCurrency': 'CDF',
         'rate': 1.0,
+        'language': 'fr',
       };
       if (currency != null) {
         basePrefs['currency'] = currency;

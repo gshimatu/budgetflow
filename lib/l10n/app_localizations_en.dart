@@ -40,4 +40,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ok => 'OK';
+
+  @override
+  String get defaultLanguage => 'App language';
+
+  @override
+  String get languageUpdated => 'Language updated.';
+
+  @override
+  String get languageUpdateFailed => 'Unable to update language.';
 }

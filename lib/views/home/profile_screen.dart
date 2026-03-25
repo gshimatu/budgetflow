@@ -2,12 +2,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../models/transaction_model.dart';
 import '../../routes/app_routes.dart';
 import '../../services/firestore_service.dart';
 import '../../services/api_service.dart';
 import '../../controllers/theme_controller.dart';
+import '../../controllers/language_controller.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -870,10 +872,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final notifications = prefs['notifications'] as bool? ?? true;
                   final weeklyReport = prefs['weeklyReport'] as bool? ?? false;
                   final currency = prefs['currency'] as String? ?? 'CDF';
+                  final language = prefs['language'] as String? ?? 'fr';
+                  final languageController = context.read<LanguageController>();
                   return _PreferencesCard(
                     notifications: notifications,
                     weeklyReport: weeklyReport,
                     currency: currency,
+                    language: language,
                     onToggleNotifications: (value) {
                       FirestoreService().updateUserPreferences(
                         user.uid,
@@ -899,6 +904,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         to: value,
                         rate: rate,
                       );
+                    },
+                    onLanguageChanged: (value) async {
+                      await FirestoreService().updateUserPreferences(
+                        user.uid,
+                        language: value,
+                      );
+                      await languageController.setLocaleFromCode(value);
                     },
                   );
                 },
@@ -1053,17 +1065,21 @@ class _PreferencesCard extends StatefulWidget {
     required this.notifications,
     required this.weeklyReport,
     required this.currency,
+    required this.language,
     required this.onToggleNotifications,
     required this.onToggleWeeklyReport,
     required this.onCurrencyChanged,
+    required this.onLanguageChanged,
   });
 
   final bool notifications;
   final bool weeklyReport;
   final String currency;
+  final String language;
   final ValueChanged<bool> onToggleNotifications;
   final ValueChanged<bool> onToggleWeeklyReport;
   final Future<void> Function(String value) onCurrencyChanged;
+  final Future<void> Function(String value) onLanguageChanged;
 
   @override
   State<_PreferencesCard> createState() => _PreferencesCardState();
@@ -1074,11 +1090,15 @@ class _PreferencesCardState extends State<_PreferencesCard> {
   bool _weeklyReport = false;
   String _currency = 'CDF';
   String _pendingCurrency = 'CDF';
+  String _language = 'fr';
+  String _pendingLanguage = 'fr';
   bool _initialized = false;
   bool _savingCurrency = false;
+  bool _savingLanguage = false;
   double _progress = 0;
 
   final _currencies = const ['CDF', 'USD', 'EUR', 'GBP', 'ZAR', 'NGN'];
+  final _languages = const ['fr', 'en'];
 
   @override
   void didUpdateWidget(covariant _PreferencesCard oldWidget) {
@@ -1093,6 +1113,10 @@ class _PreferencesCardState extends State<_PreferencesCard> {
       _currency = widget.currency;
       _pendingCurrency = widget.currency;
     }
+    if (oldWidget.language != widget.language) {
+      _language = widget.language;
+      _pendingLanguage = widget.language;
+    }
   }
 
   @override
@@ -1102,6 +1126,8 @@ class _PreferencesCardState extends State<_PreferencesCard> {
       _weeklyReport = widget.weeklyReport;
       _currency = widget.currency;
       _pendingCurrency = widget.currency;
+      _language = widget.language;
+      _pendingLanguage = widget.language;
       _initialized = true;
     }
     return Container(
@@ -1245,6 +1271,93 @@ class _PreferencesCardState extends State<_PreferencesCard> {
                           ),
                         )
                       : const Text('Valider la devise'),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 1),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                AppLocalizations.of(context)!.defaultLanguage,
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _pendingLanguage,
+                items: _languages
+                    .map(
+                      (code) => DropdownMenuItem(
+                        value: code,
+                        child: Text(
+                          code == 'en'
+                              ? AppLocalizations.of(context)!.english
+                              : AppLocalizations.of(context)!.french,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => _pendingLanguage = value);
+                },
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.language),
+                  filled: true,
+                  fillColor: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHighest,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: (_pendingLanguage == _language || _savingLanguage)
+                      ? null
+                      : () async {
+                          setState(() => _savingLanguage = true);
+                          try {
+                            await widget.onLanguageChanged(_pendingLanguage);
+                            if (!mounted) return;
+                            setState(() {
+                              _language = _pendingLanguage;
+                              _savingLanguage = false;
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  AppLocalizations.of(context)!.languageUpdated,
+                                ),
+                              ),
+                            );
+                          } catch (_) {
+                            if (!mounted) return;
+                            setState(() => _savingLanguage = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  AppLocalizations.of(context)!.languageUpdateFailed,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                  child: _savingLanguage
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(AppLocalizations.of(context)!.save),
                 ),
               ),
             ],

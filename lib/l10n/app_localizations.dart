@@ -163,6 +163,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'OK'**
   String get ok;
+
+  /// No description provided for @defaultLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'App language'**
+  String get defaultLanguage;
+
+  /// No description provided for @languageUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Language updated.'**
+  String get languageUpdated;
+
+  /// No description provided for @languageUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to update language.'**
+  String get languageUpdateFailed;
 }
 
 class _AppLocalizationsDelegate

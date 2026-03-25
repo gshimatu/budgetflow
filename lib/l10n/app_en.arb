@@ -12,5 +12,9 @@
   "update": "Update",
   "delete": "Delete",
   "confirm": "Confirm",
-  "ok": "OK"
+  "ok": "OK",
+
+  "defaultLanguage": "App language",
+  "languageUpdated": "Language updated.",
+  "languageUpdateFailed": "Unable to update language."
 }
