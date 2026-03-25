@@ -96,6 +96,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
         return Padding(
           padding: EdgeInsets.only(
             left: 20,
@@ -133,11 +134,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: nameController,
+                        style: TextStyle(color: scheme.onSurface),
                         decoration: InputDecoration(
                           labelText: l10n.categoryName,
                           prefixIcon: const Icon(Icons.category_outlined),
                           filled: true,
-                          fillColor: const Color(0xFFF2F6FA),
+                          fillColor: scheme.surfaceContainerHighest,
+                          labelStyle: TextStyle(color: scheme.onSurfaceVariant),
+                          hintStyle: TextStyle(color: scheme.onSurfaceVariant),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -153,6 +157,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: type,
+                        style: TextStyle(color: scheme.onSurface),
+                        dropdownColor: scheme.surface,
                         items: [
                           DropdownMenuItem(
                             value: 'expense',
@@ -170,7 +176,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         decoration: InputDecoration(
                           labelText: l10n.type,
                           filled: true,
-                          fillColor: const Color(0xFFF2F6FA),
+                          fillColor: scheme.surfaceContainerHighest,
+                          labelStyle: TextStyle(color: scheme.onSurfaceVariant),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
