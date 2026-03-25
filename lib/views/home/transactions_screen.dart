@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../models/transaction_model.dart';
 import '../../services/firestore_service.dart';
@@ -50,9 +51,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Transactions')),
-        body: const Center(
-          child: Text('Connectez-vous pour voir vos transactions.'),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)!.transactions)),
+        body: Center(
+          child: Text(AppLocalizations.of(context)!.signInToSeeTransactions),
         ),
       );
     }
@@ -61,7 +62,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     return Scaffold(
       backgroundColor: scheme.surface,
       appBar: AppBar(
-        title: const Text('Transactions'),
+        title: Text(AppLocalizations.of(context)!.transactions),
         actions: [
           IconButton(
             onPressed: () async {
@@ -94,8 +95,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               }
               final transactions = snapshot.data ?? [];
               if (transactions.isEmpty) {
-                return const Center(
-                  child: Text('Aucune transaction enregistree.'),
+                return Center(
+                  child: Text(AppLocalizations.of(context)!.noTransactionsRecorded),
                 );
               }
 
@@ -103,7 +104,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   _applyFilter(transactions, _filter, _customDay);
               if (filteredTransactions.isEmpty) {
                 return Center(
-                  child: Text(_emptyMessageForFilter(_filter)),
+                  child: Text(_emptyMessageForFilter(context, _filter)),
                 );
               }
 
@@ -162,21 +163,21 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Supprimer la transaction'),
-          content: const Text(
-            'Voulez-vous vraiment supprimer cette transaction ?',
+          title: Text(AppLocalizations.of(context)!.deleteTransactionTitle),
+          content: Text(
+            AppLocalizations.of(context)!.deleteTransactionMessage,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annuler'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFEF4444),
               ),
-              child: const Text('Supprimer'),
+              child: Text(AppLocalizations.of(context)!.delete),
             ),
           ],
         );
@@ -205,7 +206,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Filtrer les transactions',
+                AppLocalizations.of(context)!.filterTransactions,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -213,7 +214,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               const SizedBox(height: 12),
               ..._DateFilter.values.map(
                 (filter) => ListTile(
-                  title: Text(_labelForFilter(filter)),
+                  title: Text(_labelForFilter(context, filter)),
                   trailing: _filter == filter
                       ? Icon(Icons.check, color: scheme.primary)
                       : null,
@@ -240,39 +241,37 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
 enum _DateFilter { all, today, day, week, month, year }
 
-String _labelForFilter(_DateFilter filter) {
+String _labelForFilter(BuildContext context, _DateFilter filter) {
   switch (filter) {
     case _DateFilter.today:
-      return 'Aujourd\'hui';
+      return AppLocalizations.of(context)!.filterToday;
     case _DateFilter.day:
-      return 'Choisir un jour';
+      return AppLocalizations.of(context)!.filterPickDay;
     case _DateFilter.week:
-      return 'Cette semaine';
+      return AppLocalizations.of(context)!.filterWeek;
     case _DateFilter.month:
-      return 'Ce mois';
+      return AppLocalizations.of(context)!.filterMonth;
     case _DateFilter.year:
-      return 'Cette annee';
+      return AppLocalizations.of(context)!.filterYear;
     case _DateFilter.all:
-    default:
-      return 'Toutes';
+      return AppLocalizations.of(context)!.filterAll;
   }
 }
 
-String _emptyMessageForFilter(_DateFilter filter) {
+String _emptyMessageForFilter(BuildContext context, _DateFilter filter) {
   switch (filter) {
     case _DateFilter.today:
-      return 'Aucune transaction aujourd\'hui.';
+      return AppLocalizations.of(context)!.emptyToday;
     case _DateFilter.day:
-      return 'Aucune transaction pour ce jour.';
+      return AppLocalizations.of(context)!.emptyDay;
     case _DateFilter.week:
-      return 'Aucune transaction cette semaine.';
+      return AppLocalizations.of(context)!.emptyWeek;
     case _DateFilter.month:
-      return 'Aucune transaction ce mois.';
+      return AppLocalizations.of(context)!.emptyMonth;
     case _DateFilter.year:
-      return 'Aucune transaction cette annee.';
+      return AppLocalizations.of(context)!.emptyYear;
     case _DateFilter.all:
-    default:
-      return 'Aucune transaction enregistree.';
+      return AppLocalizations.of(context)!.emptyAll;
   }
 }
 
@@ -309,7 +308,6 @@ List<TransactionModel> _applyFilter(
       end = DateTime(now.year + 1, 1, 1);
       break;
     case _DateFilter.all:
-    default:
       return items;
   }
 
@@ -338,8 +336,8 @@ class _FilterChips extends StatelessWidget {
       runSpacing: 8,
       children: _DateFilter.values.map((filter) {
         final label = filter == _DateFilter.day && selectedDay != null
-            ? 'Jour: ${DateFormat('dd/MM').format(selectedDay!)}'
-            : _labelForFilter(filter);
+            ? AppLocalizations.of(context)!.filterDayLabel(DateFormat('dd/MM').format(selectedDay!))
+            : _labelForFilter(context, filter);
         return ChoiceChip(
           label: Text(label),
           selected: selected == filter,

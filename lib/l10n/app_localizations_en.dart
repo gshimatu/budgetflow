@@ -163,4 +163,70 @@ class AppLocalizationsEn extends AppLocalizations {
   String currencyFromTo(Object from, Object to) {
     return 'Currency: $from -> $to';
   }
+
+  @override
+  String get transactions => 'Transactions';
+
+  @override
+  String get signInToSeeTransactions => 'Sign in to view your transactions.';
+
+  @override
+  String get noTransactionsRecorded => 'No transactions recorded.';
+
+  @override
+  String get filterTransactions => 'Filter transactions';
+
+  @override
+  String get filterAll => 'All';
+
+  @override
+  String get filterToday => 'Today';
+
+  @override
+  String get filterPickDay => 'Pick a day';
+
+  @override
+  String get filterWeek => 'This week';
+
+  @override
+  String get filterMonth => 'This month';
+
+  @override
+  String get filterYear => 'This year';
+
+  @override
+  String get emptyToday => 'No transactions today.';
+
+  @override
+  String get emptyDay => 'No transactions for this day.';
+
+  @override
+  String get emptyWeek => 'No transactions this week.';
+
+  @override
+  String get emptyMonth => 'No transactions this month.';
+
+  @override
+  String get emptyYear => 'No transactions this year.';
+
+  @override
+  String get emptyAll => 'No transactions recorded.';
+
+  @override
+  String get deleteTransactionTitle => 'Delete transaction';
+
+  @override
+  String get deleteTransactionMessage =>
+      'Do you really want to delete this transaction?';
+
+  @override
+  String filterDayLabel(Object date) {
+    return 'Day: $date';
+  }
+
+  @override
+  String get confirmDelete => 'Delete';
+
+  @override
+  String get today => 'Today';
 }

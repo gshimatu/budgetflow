@@ -397,6 +397,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Currency: {from} -> {to}'**
   String currencyFromTo(Object from, Object to);
+
+  /// No description provided for @transactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get transactions;
+
+  /// No description provided for @signInToSeeTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to view your transactions.'**
+  String get signInToSeeTransactions;
+
+  /// No description provided for @noTransactionsRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions recorded.'**
+  String get noTransactionsRecorded;
+
+  /// No description provided for @filterTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter transactions'**
+  String get filterTransactions;
+
+  /// No description provided for @filterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get filterAll;
+
+  /// No description provided for @filterToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get filterToday;
+
+  /// No description provided for @filterPickDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a day'**
+  String get filterPickDay;
+
+  /// No description provided for @filterWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get filterWeek;
+
+  /// No description provided for @filterMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get filterMonth;
+
+  /// No description provided for @filterYear.
+  ///
+  /// In en, this message translates to:
+  /// **'This year'**
+  String get filterYear;
+
+  /// No description provided for @emptyToday.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions today.'**
+  String get emptyToday;
+
+  /// No description provided for @emptyDay.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions for this day.'**
+  String get emptyDay;
+
+  /// No description provided for @emptyWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions this week.'**
+  String get emptyWeek;
+
+  /// No description provided for @emptyMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions this month.'**
+  String get emptyMonth;
+
+  /// No description provided for @emptyYear.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions this year.'**
+  String get emptyYear;
+
+  /// No description provided for @emptyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions recorded.'**
+  String get emptyAll;
+
+  /// No description provided for @deleteTransactionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete transaction'**
+  String get deleteTransactionTitle;
+
+  /// No description provided for @deleteTransactionMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you really want to delete this transaction?'**
+  String get deleteTransactionMessage;
+
+  /// No description provided for @filterDayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Day: {date}'**
+  String filterDayLabel(Object date);
+
+  /// No description provided for @confirmDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get confirmDelete;
+
+  /// No description provided for @today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get today;
 }
 
 class _AppLocalizationsDelegate

@@ -163,4 +163,71 @@ class AppLocalizationsFr extends AppLocalizations {
   String currencyFromTo(Object from, Object to) {
     return 'Devise: $from -> $to';
   }
+
+  @override
+  String get transactions => 'Transactions';
+
+  @override
+  String get signInToSeeTransactions =>
+      'Connectez-vous pour voir vos transactions.';
+
+  @override
+  String get noTransactionsRecorded => 'Aucune transaction enregistree.';
+
+  @override
+  String get filterTransactions => 'Filtrer les transactions';
+
+  @override
+  String get filterAll => 'Toutes';
+
+  @override
+  String get filterToday => 'Aujourd\'hui';
+
+  @override
+  String get filterPickDay => 'Choisir un jour';
+
+  @override
+  String get filterWeek => 'Cette semaine';
+
+  @override
+  String get filterMonth => 'Ce mois';
+
+  @override
+  String get filterYear => 'Cette annee';
+
+  @override
+  String get emptyToday => 'Aucune transaction aujourd\'hui.';
+
+  @override
+  String get emptyDay => 'Aucune transaction pour ce jour.';
+
+  @override
+  String get emptyWeek => 'Aucune transaction cette semaine.';
+
+  @override
+  String get emptyMonth => 'Aucune transaction ce mois.';
+
+  @override
+  String get emptyYear => 'Aucune transaction cette annee.';
+
+  @override
+  String get emptyAll => 'Aucune transaction enregistree.';
+
+  @override
+  String get deleteTransactionTitle => 'Supprimer la transaction';
+
+  @override
+  String get deleteTransactionMessage =>
+      'Voulez-vous vraiment supprimer cette transaction ?';
+
+  @override
+  String filterDayLabel(Object date) {
+    return 'Jour : $date';
+  }
+
+  @override
+  String get confirmDelete => 'Supprimer';
+
+  @override
+  String get today => 'Aujourd\'hui';
 }
