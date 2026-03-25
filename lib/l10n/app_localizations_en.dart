@@ -229,4 +229,340 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get today => 'Today';
+
+  @override
+  String get newTransaction => 'New transaction';
+
+  @override
+  String get editTransaction => 'Edit transaction';
+
+  @override
+  String get type => 'Type';
+
+  @override
+  String get expense => 'Expense';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get other => 'Other';
+
+  @override
+  String get categoryName => 'Category name';
+
+  @override
+  String get noteOptional => 'Note (optional)';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get choose => 'Choose';
+
+  @override
+  String amountEquivalent(Object amount) {
+    return 'Equivalent: $amount';
+  }
+
+  @override
+  String get converting => 'Conversion in progress...';
+
+  @override
+  String get invalidRate => 'Invalid rate';
+
+  @override
+  String get saveFailed => 'Unable to save.';
+
+  @override
+  String get transactionSaveFailed => 'Unable to save the transaction.';
+
+  @override
+  String get statsTitle => 'Statistics';
+
+  @override
+  String get signInToSeeStats => 'Sign in to see your statistics.';
+
+  @override
+  String get statsNoTransactions => 'No transactions yet.';
+
+  @override
+  String get expensesBreakdown => 'Expenses breakdown';
+
+  @override
+  String get monthlyEvolution => 'Monthly evolution';
+
+  @override
+  String get dailyExpenseTrendTitle => 'Trend (polygon) - Daily expenses';
+
+  @override
+  String get monthLabel => 'Month';
+
+  @override
+  String get yearLabel => 'Year';
+
+  @override
+  String get balanceLabel => 'Balance';
+
+  @override
+  String get monthlyEvolutionNote => 'Evolution over the last 6 months shown.';
+
+  @override
+  String get dailyEvolutionNote =>
+      'Daily expense evolution for the selected month.';
+
+  @override
+  String get profileTitle => 'Profile';
+
+  @override
+  String get personalInfo => 'Personal information';
+
+  @override
+  String get fullName => 'Full name';
+
+  @override
+  String get emailLabel => 'Email';
+
+  @override
+  String get updateProfile => 'Update';
+
+  @override
+  String get profileUpdated => 'Profile updated.';
+
+  @override
+  String get verifyEmailSent =>
+      'A verification email has been sent. Confirm it to change your email.';
+
+  @override
+  String get profileUpdateFailed => 'Unable to update profile.';
+
+  @override
+  String get userNotSignedIn => 'User not signed in.';
+
+  @override
+  String get resetDataTitle => 'Reset data';
+
+  @override
+  String get resetDataMessage =>
+      'This action deletes all your transactions and custom categories.\nConfirm with your password.';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get reset => 'Reset';
+
+  @override
+  String get resetDone => 'Data reset.';
+
+  @override
+  String get resetDataFailed => 'Unable to reset data.';
+
+  @override
+  String get defaultUserName => 'User';
+
+  @override
+  String get defaultUserEmail => 'No email';
+
+  @override
+  String get selectCategory => 'Please select a category';
+
+  @override
+  String get enterCategoryName => 'Please enter a category name';
+
+  @override
+  String get deleteAccountTitle => 'Delete account';
+
+  @override
+  String get deleteAccountMessage =>
+      'This action is irreversible. Do you want to continue?';
+
+  @override
+  String get deleteFailed => 'Deletion failed. Try again later.';
+
+  @override
+  String get sendFeedback => 'Send feedback';
+
+  @override
+  String get feedbackType => 'Type';
+
+  @override
+  String get feedbackBug => 'Report a bug';
+
+  @override
+  String get feedbackSuggestion => 'Improvement suggestion';
+
+  @override
+  String get feedbackComment => 'General comment';
+
+  @override
+  String get feedbackMessage => 'Your message';
+
+  @override
+  String get feedbackMessageRequired => 'Please enter a message';
+
+  @override
+  String get feedbackMessageShort => 'Message too short';
+
+  @override
+  String get feedbackThanks => 'Thanks for your feedback.';
+
+  @override
+  String get feedbackFailed => 'Unable to send. Try again later.';
+
+  @override
+  String get changePassword => 'Change password';
+
+  @override
+  String get oldPassword => 'Old password';
+
+  @override
+  String get newPassword => 'New password';
+
+  @override
+  String get confirmPassword => 'Confirm password';
+
+  @override
+  String get passwordTooShort => 'Password too short';
+
+  @override
+  String get passwordMismatch => 'Passwords do not match';
+
+  @override
+  String get passwordUpdated => 'Password updated.';
+
+  @override
+  String get passwordUpdateFailed => 'Unable to update password.';
+
+  @override
+  String get externalProviderReset =>
+      'Signed in via external provider. Use that provider to reset your account.';
+
+  @override
+  String get externalProviderChange =>
+      'Signed in via external provider. Change password from that provider.';
+
+  @override
+  String get signOut => 'Sign out';
+
+  @override
+  String get preferences => 'Preferences';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get expenseAlerts => 'Spending alerts';
+
+  @override
+  String get weeklyReport => 'Weekly report';
+
+  @override
+  String get weeklySummary => 'Summary every Monday';
+
+  @override
+  String get defaultCurrency => 'Default currency';
+
+  @override
+  String get validateCurrency => 'Validate currency';
+
+  @override
+  String get currencyUpdatingTitle => 'Conversion in progress';
+
+  @override
+  String get currencyUpdatingBody => 'Updating currency...';
+
+  @override
+  String get currencyUpdated => 'Currency updated.';
+
+  @override
+  String get currencyUpdateFailed => 'Unable to update.';
+
+  @override
+  String get darkMode => 'Dark mode';
+
+  @override
+  String get darkModeLight => 'Light';
+
+  @override
+  String get darkModeDark => 'Dark';
+
+  @override
+  String get weeklySummaryTitle => 'Weekly summary';
+
+  @override
+  String get noWeeklyTransactions => 'No transactions this week.';
+
+  @override
+  String topCategory(Object category) {
+    return 'Top category: $category';
+  }
+
+  @override
+  String get security => 'Security';
+
+  @override
+  String get resetMyData => 'Reset my data';
+
+  @override
+  String get resetMyDataSubtitle => 'Deletes all transactions and categories.';
+
+  @override
+  String get deleteMyAccount => 'Delete my account';
+
+  @override
+  String get comments => 'Comments';
+
+  @override
+  String get sendFeedbackSubtitle => 'Report a bug or suggest an improvement.';
+
+  @override
+  String get signInToSeeProfile => 'Sign in to view your profile.';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String get enterPassword => 'Please enter your password';
+
+  @override
+  String get enterOldPassword => 'Please enter your old password';
+
+  @override
+  String get enterNewPassword => 'Please enter a new password';
+
+  @override
+  String get confirmPasswordRequired => 'Please confirm the password';
+
+  @override
+  String get reauthenticateToContinue => 'Please reauthenticate to continue.';
+
+  @override
+  String get enterName => 'Please enter your name';
+
+  @override
+  String get enterEmail => 'Please enter your email';
+
+  @override
+  String get noExpenseThisMonth => 'No expenses for this month.';
+
+  @override
+  String get noDataForPeriod => 'No data for this period.';
+
+  @override
+  String weeklySummaryRange(Object end, Object start) {
+    return 'From $start to $end';
+  }
+
+  @override
+  String get oldPasswordIncorrect => 'Old password is incorrect.';
+
+  @override
+  String get emailAlreadyUsed => 'Email already in use.';
+
+  @override
+  String get invalidEmail => 'Invalid email address.';
+
+  @override
+  String get genericError => 'An error occurred.';
 }

@@ -523,6 +523,654 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Today'**
   String get today;
+
+  /// No description provided for @newTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'New transaction'**
+  String get newTransaction;
+
+  /// No description provided for @editTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit transaction'**
+  String get editTransaction;
+
+  /// No description provided for @type.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get type;
+
+  /// No description provided for @expense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get expense;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @other.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get other;
+
+  /// No description provided for @categoryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Category name'**
+  String get categoryName;
+
+  /// No description provided for @noteOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get noteOptional;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
+
+  /// No description provided for @choose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get choose;
+
+  /// No description provided for @amountEquivalent.
+  ///
+  /// In en, this message translates to:
+  /// **'Equivalent: {amount}'**
+  String amountEquivalent(Object amount);
+
+  /// No description provided for @converting.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversion in progress...'**
+  String get converting;
+
+  /// No description provided for @invalidRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid rate'**
+  String get invalidRate;
+
+  /// No description provided for @saveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to save.'**
+  String get saveFailed;
+
+  /// No description provided for @transactionSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to save the transaction.'**
+  String get transactionSaveFailed;
+
+  /// No description provided for @statsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get statsTitle;
+
+  /// No description provided for @signInToSeeStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to see your statistics.'**
+  String get signInToSeeStats;
+
+  /// No description provided for @statsNoTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet.'**
+  String get statsNoTransactions;
+
+  /// No description provided for @expensesBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses breakdown'**
+  String get expensesBreakdown;
+
+  /// No description provided for @monthlyEvolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly evolution'**
+  String get monthlyEvolution;
+
+  /// No description provided for @dailyExpenseTrendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trend (polygon) - Daily expenses'**
+  String get dailyExpenseTrendTitle;
+
+  /// No description provided for @monthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get monthLabel;
+
+  /// No description provided for @yearLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get yearLabel;
+
+  /// No description provided for @balanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get balanceLabel;
+
+  /// No description provided for @monthlyEvolutionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Evolution over the last 6 months shown.'**
+  String get monthlyEvolutionNote;
+
+  /// No description provided for @dailyEvolutionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily expense evolution for the selected month.'**
+  String get dailyEvolutionNote;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileTitle;
+
+  /// No description provided for @personalInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal information'**
+  String get personalInfo;
+
+  /// No description provided for @fullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full name'**
+  String get fullName;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get emailLabel;
+
+  /// No description provided for @updateProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get updateProfile;
+
+  /// No description provided for @profileUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated.'**
+  String get profileUpdated;
+
+  /// No description provided for @verifyEmailSent.
+  ///
+  /// In en, this message translates to:
+  /// **'A verification email has been sent. Confirm it to change your email.'**
+  String get verifyEmailSent;
+
+  /// No description provided for @profileUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to update profile.'**
+  String get profileUpdateFailed;
+
+  /// No description provided for @userNotSignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'User not signed in.'**
+  String get userNotSignedIn;
+
+  /// No description provided for @resetDataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset data'**
+  String get resetDataTitle;
+
+  /// No description provided for @resetDataMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This action deletes all your transactions and custom categories.\nConfirm with your password.'**
+  String get resetDataMessage;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// No description provided for @reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
+
+  /// No description provided for @resetDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Data reset.'**
+  String get resetDone;
+
+  /// No description provided for @resetDataFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to reset data.'**
+  String get resetDataFailed;
+
+  /// No description provided for @defaultUserName.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get defaultUserName;
+
+  /// No description provided for @defaultUserEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'No email'**
+  String get defaultUserEmail;
+
+  /// No description provided for @selectCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a category'**
+  String get selectCategory;
+
+  /// No description provided for @enterCategoryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a category name'**
+  String get enterCategoryName;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This action is irreversible. Do you want to continue?'**
+  String get deleteAccountMessage;
+
+  /// No description provided for @deleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletion failed. Try again later.'**
+  String get deleteFailed;
+
+  /// No description provided for @sendFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Send feedback'**
+  String get sendFeedback;
+
+  /// No description provided for @feedbackType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get feedbackType;
+
+  /// No description provided for @feedbackBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a bug'**
+  String get feedbackBug;
+
+  /// No description provided for @feedbackSuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Improvement suggestion'**
+  String get feedbackSuggestion;
+
+  /// No description provided for @feedbackComment.
+  ///
+  /// In en, this message translates to:
+  /// **'General comment'**
+  String get feedbackComment;
+
+  /// No description provided for @feedbackMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your message'**
+  String get feedbackMessage;
+
+  /// No description provided for @feedbackMessageRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a message'**
+  String get feedbackMessageRequired;
+
+  /// No description provided for @feedbackMessageShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Message too short'**
+  String get feedbackMessageShort;
+
+  /// No description provided for @feedbackThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks for your feedback.'**
+  String get feedbackThanks;
+
+  /// No description provided for @feedbackFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to send. Try again later.'**
+  String get feedbackFailed;
+
+  /// No description provided for @changePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get changePassword;
+
+  /// No description provided for @oldPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Old password'**
+  String get oldPassword;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get newPassword;
+
+  /// No description provided for @confirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get confirmPassword;
+
+  /// No description provided for @passwordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password too short'**
+  String get passwordTooShort;
+
+  /// No description provided for @passwordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordMismatch;
+
+  /// No description provided for @passwordUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated.'**
+  String get passwordUpdated;
+
+  /// No description provided for @passwordUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to update password.'**
+  String get passwordUpdateFailed;
+
+  /// No description provided for @externalProviderReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in via external provider. Use that provider to reset your account.'**
+  String get externalProviderReset;
+
+  /// No description provided for @externalProviderChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in via external provider. Change password from that provider.'**
+  String get externalProviderChange;
+
+  /// No description provided for @signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get signOut;
+
+  /// No description provided for @preferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get preferences;
+
+  /// No description provided for @notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// No description provided for @expenseAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending alerts'**
+  String get expenseAlerts;
+
+  /// No description provided for @weeklyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly report'**
+  String get weeklyReport;
+
+  /// No description provided for @weeklySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary every Monday'**
+  String get weeklySummary;
+
+  /// No description provided for @defaultCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Default currency'**
+  String get defaultCurrency;
+
+  /// No description provided for @validateCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Validate currency'**
+  String get validateCurrency;
+
+  /// No description provided for @currencyUpdatingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversion in progress'**
+  String get currencyUpdatingTitle;
+
+  /// No description provided for @currencyUpdatingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating currency...'**
+  String get currencyUpdatingBody;
+
+  /// No description provided for @currencyUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency updated.'**
+  String get currencyUpdated;
+
+  /// No description provided for @currencyUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to update.'**
+  String get currencyUpdateFailed;
+
+  /// No description provided for @darkMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark mode'**
+  String get darkMode;
+
+  /// No description provided for @darkModeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get darkModeLight;
+
+  /// No description provided for @darkModeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get darkModeDark;
+
+  /// No description provided for @weeklySummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly summary'**
+  String get weeklySummaryTitle;
+
+  /// No description provided for @noWeeklyTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions this week.'**
+  String get noWeeklyTransactions;
+
+  /// No description provided for @topCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Top category: {category}'**
+  String topCategory(Object category);
+
+  /// No description provided for @security.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get security;
+
+  /// No description provided for @resetMyData.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset my data'**
+  String get resetMyData;
+
+  /// No description provided for @resetMyDataSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes all transactions and categories.'**
+  String get resetMyDataSubtitle;
+
+  /// No description provided for @deleteMyAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete my account'**
+  String get deleteMyAccount;
+
+  /// No description provided for @comments.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get comments;
+
+  /// No description provided for @sendFeedbackSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a bug or suggest an improvement.'**
+  String get sendFeedbackSubtitle;
+
+  /// No description provided for @signInToSeeProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to view your profile.'**
+  String get signInToSeeProfile;
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
+  /// No description provided for @enterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your password'**
+  String get enterPassword;
+
+  /// No description provided for @enterOldPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your old password'**
+  String get enterOldPassword;
+
+  /// No description provided for @enterNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a new password'**
+  String get enterNewPassword;
+
+  /// No description provided for @confirmPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm the password'**
+  String get confirmPasswordRequired;
+
+  /// No description provided for @reauthenticateToContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Please reauthenticate to continue.'**
+  String get reauthenticateToContinue;
+
+  /// No description provided for @enterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your name'**
+  String get enterName;
+
+  /// No description provided for @enterEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your email'**
+  String get enterEmail;
+
+  /// No description provided for @noExpenseThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses for this month.'**
+  String get noExpenseThisMonth;
+
+  /// No description provided for @noDataForPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'No data for this period.'**
+  String get noDataForPeriod;
+
+  /// No description provided for @weeklySummaryRange.
+  ///
+  /// In en, this message translates to:
+  /// **'From {start} to {end}'**
+  String weeklySummaryRange(Object end, Object start);
+
+  /// No description provided for @oldPasswordIncorrect.
+  ///
+  /// In en, this message translates to:
+  /// **'Old password is incorrect.'**
+  String get oldPasswordIncorrect;
+
+  /// No description provided for @emailAlreadyUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Email already in use.'**
+  String get emailAlreadyUsed;
+
+  /// No description provided for @invalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email address.'**
+  String get invalidEmail;
+
+  /// No description provided for @genericError.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred.'**
+  String get genericError;
 }
 
 class _AppLocalizationsDelegate

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../models/category_model.dart';
 import '../../models/transaction_model.dart';
@@ -17,10 +18,8 @@ Future<void> showTransactionForm(
 }) async {
   final formKey = GlobalKey<FormState>();
   final amountController = TextEditingController(
-      text: existing == null
-          ? null
-          : (existing.amount * rate).toStringAsFixed(2),
-    );
+    text: existing == null ? null : (existing.amount * rate).toStringAsFixed(2),
+  );
   final noteController = TextEditingController(text: existing?.note ?? '');
   DateTime selectedDate = existing?.date ?? DateTime.now();
   String type = existing?.type ?? initialType;
@@ -42,10 +41,9 @@ Future<void> showTransactionForm(
     'NGN',
     currency,
     baseCurrency,
-  }.toList()
-    ..sort();
+  }.toList()..sort();
 
-  double? _parseAmount() {
+  double? parseAmount() {
     final raw = amountController.text.trim().replaceAll(',', '.');
     if (raw.isEmpty) return null;
     final parsed = double.tryParse(raw);
@@ -53,7 +51,7 @@ Future<void> showTransactionForm(
     return parsed;
   }
 
-  Future<void> _ensureRateToBase(
+  Future<void> ensureRateToBase(
     String selected,
     void Function(VoidCallback fn) setState,
   ) async {
@@ -69,7 +67,9 @@ Future<void> showTransactionForm(
       final inverted = rate == 0 ? null : (1 / rate);
       setState(() {
         rateToBase = inverted;
-        rateError = inverted == null ? 'Taux invalide' : null;
+        rateError = inverted == null
+            ? AppLocalizations.of(context)!.invalidRate
+            : null;
       });
       return;
     }
@@ -108,7 +108,7 @@ Future<void> showTransactionForm(
             initialized = true;
             Future.microtask(() {
               if (context.mounted) {
-                _ensureRateToBase(amountCurrency, setState);
+                ensureRateToBase(amountCurrency, setState);
               }
             });
           }
@@ -133,24 +133,26 @@ Future<void> showTransactionForm(
                       final globalCategories = globalSnapshot.data ?? [];
                       final userCategories = userSnapshot.data ?? [];
                       final names = <String>{};
-                      for (final cat
-                          in [...globalCategories, ...userCategories]) {
+                      for (final cat in [
+                        ...globalCategories,
+                        ...userCategories,
+                      ]) {
                         if (cat.name.trim().isNotEmpty) {
                           names.add(cat.name.trim());
                         }
                       }
                       final categoryItems = names.toList()..sort();
-                      if (selectedCategory == null) {
-                        selectedCategory = categoryItems.isNotEmpty
-                            ? categoryItems.first
-                            : 'Autre';
-                      }
-                      final isCustomCategory = selectedCategory != null &&
+                      selectedCategory ??= categoryItems.isNotEmpty
+                          ? categoryItems.first
+                          : AppLocalizations.of(context)!.other;
+                      final isCustomCategory =
+                          selectedCategory != null &&
                           !categoryItems.contains(selectedCategory) &&
-                          selectedCategory != 'Autre';
+                          selectedCategory !=
+                              AppLocalizations.of(context)!.other;
                       if (isCustomCategory && customCategory == null) {
                         customCategory = selectedCategory;
-                        selectedCategory = 'Autre';
+                        selectedCategory = AppLocalizations.of(context)!.other;
                       }
 
                       return Form(
@@ -162,11 +164,13 @@ Future<void> showTransactionForm(
                               children: [
                                 Text(
                                   existing == null
-                                      ? 'Nouvelle transaction'
-                                      : 'Modifier la transaction',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
+                                      ? AppLocalizations.of(
+                                          context,
+                                        )!.newTransaction
+                                      : AppLocalizations.of(
+                                          context,
+                                        )!.editTransaction,
+                                  style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(fontWeight: FontWeight.w700),
                                 ),
                                 const Spacer(),
@@ -181,11 +185,11 @@ Future<void> showTransactionForm(
                               controller: amountController,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                      decimal: true),
+                                    decimal: true,
+                                  ),
                               decoration: InputDecoration(
-                                labelText: 'Montant',
-                                prefixIcon:
-                                    const Icon(Icons.payments_outlined),
+                                labelText: AppLocalizations.of(context)!.amount,
+                                prefixIcon: const Icon(Icons.payments_outlined),
                                 suffixIconConstraints: const BoxConstraints(
                                   minWidth: 90,
                                 ),
@@ -209,7 +213,7 @@ Future<void> showTransactionForm(
                                               rateError = null;
                                               rateToBase = null;
                                             });
-                                            await _ensureRateToBase(
+                                            await ensureRateToBase(
                                               value,
                                               setState,
                                             );
@@ -217,9 +221,9 @@ Future<void> showTransactionForm(
                                   ),
                                 ),
                                 filled: true,
-                                fillColor: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest,
+                                fillColor: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide.none,
@@ -227,13 +231,17 @@ Future<void> showTransactionForm(
                               ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
-                                  return 'Veuillez saisir un montant';
+                                  return AppLocalizations.of(
+                                    context,
+                                  )!.enterAmount;
                                 }
                                 final parsed = double.tryParse(
                                   value.replaceAll(',', '.'),
                                 );
                                 if (parsed == null || parsed <= 0) {
-                                  return 'Montant invalide';
+                                  return AppLocalizations.of(
+                                    context,
+                                  )!.invalidAmount;
                                 }
                                 return null;
                               },
@@ -258,7 +266,9 @@ Future<void> showTransactionForm(
                                   Expanded(
                                     child: Text(
                                       loadingRate
-                                          ? 'Conversion en cours...'
+                                          ? AppLocalizations.of(
+                                              context,
+                                            )!.converting
                                           : (rateError ?? ''),
                                       style: Theme.of(context)
                                           .textTheme
@@ -272,7 +282,7 @@ Future<void> showTransactionForm(
                               const SizedBox(height: 8),
                               Builder(
                                 builder: (context) {
-                                  final parsed = _parseAmount();
+                                  final parsed = parseAmount();
                                   if (parsed == null || rateToBase == null) {
                                     return const SizedBox.shrink();
                                   }
@@ -281,14 +291,16 @@ Future<void> showTransactionForm(
                                   final formatter =
                                       NumberFormat.decimalPattern();
                                   return Text(
-                                    'Equivalent: ${formatter.format(displayAmount)} $currency',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.amountEquivalent(
+                                      '${formatter.format(displayAmount)} $currency',
+                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
                                         ),
                                   );
                                 },
@@ -296,15 +308,17 @@ Future<void> showTransactionForm(
                             ],
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
-                              value: type,
-                              items: const [
+                              initialValue: type,
+                              items: [
                                 DropdownMenuItem(
                                   value: 'expense',
                                   child: Text('Dépense'),
                                 ),
                                 DropdownMenuItem(
                                   value: 'income',
-                                  child: Text('Revenu'),
+                                  child: Text(
+                                    AppLocalizations.of(context)!.income,
+                                  ),
                                 ),
                               ],
                               onChanged: (value) {
@@ -312,11 +326,11 @@ Future<void> showTransactionForm(
                                 setState(() => type = value);
                               },
                               decoration: InputDecoration(
-                                labelText: 'Type',
+                                labelText: AppLocalizations.of(context)!.type,
                                 filled: true,
-                                fillColor: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest,
+                                fillColor: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide.none,
@@ -325,7 +339,7 @@ Future<void> showTransactionForm(
                             ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
-                              value: selectedCategory,
+                              initialValue: selectedCategory,
                               items: [
                                 ...categoryItems.map(
                                   (name) => DropdownMenuItem(
@@ -333,9 +347,11 @@ Future<void> showTransactionForm(
                                     child: Text(name),
                                   ),
                                 ),
-                                const DropdownMenuItem(
-                                  value: 'Autre',
-                                  child: Text('Autre'),
+                                DropdownMenuItem(
+                                  value: AppLocalizations.of(context)!.other,
+                                  child: Text(
+                                    AppLocalizations.of(context)!.other,
+                                  ),
                                 ),
                               ],
                               onChanged: (value) {
@@ -344,12 +360,11 @@ Future<void> showTransactionForm(
                               },
                               decoration: InputDecoration(
                                 labelText: 'Catégorie',
-                                prefixIcon:
-                                    const Icon(Icons.category_outlined),
+                                prefixIcon: const Icon(Icons.category_outlined),
                                 filled: true,
-                                fillColor: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest,
+                                fillColor: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide.none,
@@ -357,22 +372,24 @@ Future<void> showTransactionForm(
                               ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
-                                  return 'Veuillez choisir une catégorie';
+                                  return AppLocalizations.of(
+                                    context,
+                                  )!.selectCategory;
                                 }
                                 return null;
                               },
                             ),
-                            if (selectedCategory == 'Autre') ...[
+                            if (selectedCategory ==
+                                AppLocalizations.of(context)!.other) ...[
                               const SizedBox(height: 12),
                               TextFormField(
                                 decoration: InputDecoration(
                                   labelText: 'Nom de la catégorie',
-                                  prefixIcon:
-                                      const Icon(Icons.edit_outlined),
+                                  prefixIcon: const Icon(Icons.edit_outlined),
                                   filled: true,
-                                  fillColor: Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHighest,
+                                  fillColor: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHighest,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(16),
                                     borderSide: BorderSide.none,
@@ -380,10 +397,12 @@ Future<void> showTransactionForm(
                                 ),
                                 onChanged: (value) => customCategory = value,
                                 validator: (value) {
-                                  if (selectedCategory == 'Autre' &&
-                                      (value == null ||
-                                          value.trim().isEmpty)) {
-                                    return 'Veuillez saisir une catégorie';
+                                  if (selectedCategory ==
+                                          AppLocalizations.of(context)!.other &&
+                                      (value == null || value.trim().isEmpty)) {
+                                    return AppLocalizations.of(
+                                      context,
+                                    )!.enterCategoryName;
                                   }
                                   return null;
                                 },
@@ -393,12 +412,14 @@ Future<void> showTransactionForm(
                             TextFormField(
                               controller: noteController,
                               decoration: InputDecoration(
-                                labelText: 'Note (optionnel)',
+                                labelText: AppLocalizations.of(
+                                  context,
+                                )!.noteOptional,
                                 prefixIcon: const Icon(Icons.note_outlined),
                                 filled: true,
-                                fillColor: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest,
+                                fillColor: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide.none,
@@ -411,9 +432,10 @@ Future<void> showTransactionForm(
                               children: [
                                 Expanded(
                                   child: Text(
-                                    'Date: ${DateFormat('dd MMM yyyy').format(selectedDate)}',
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium,
+                                    '${AppLocalizations.of(context)!.date}: ${DateFormat('dd MMM yyyy').format(selectedDate)}',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
                                   ),
                                 ),
                                 TextButton(
@@ -428,7 +450,9 @@ Future<void> showTransactionForm(
                                       setState(() => selectedDate = picked);
                                     }
                                   },
-                                  child: const Text('Choisir'),
+                                  child: Text(
+                                    AppLocalizations.of(context)!.choose,
+                                  ),
                                 ),
                               ],
                             ),
@@ -443,6 +467,9 @@ Future<void> showTransactionForm(
                                           return;
                                         }
                                         setState(() => saving = true);
+                                        final otherLabel = AppLocalizations.of(
+                                          context,
+                                        )!.other;
                                         try {
                                           final amount = double.parse(
                                             amountController.text
@@ -452,7 +479,8 @@ Future<void> showTransactionForm(
                                           double baseAmount;
                                           if (amountCurrency == baseCurrency) {
                                             baseAmount = amount;
-                                          } else if (amountCurrency == currency) {
+                                          } else if (amountCurrency ==
+                                              currency) {
                                             baseAmount = rate == 0
                                                 ? amount
                                                 : amount / rate;
@@ -462,16 +490,21 @@ Future<void> showTransactionForm(
                                               try {
                                                 localRate = await ApiService()
                                                     .getRate(
-                                                  from: amountCurrency,
-                                                  to: baseCurrency,
+                                                      from: amountCurrency,
+                                                      to: baseCurrency,
+                                                    );
+                                                setState(
+                                                  () => rateToBase = localRate,
                                                 );
-                                                setState(() => rateToBase = localRate);
                                               } catch (e) {
                                                 setState(() {
                                                   saving = false;
                                                   rateError = e
                                                       .toString()
-                                                      .replaceFirst('Exception: ', '');
+                                                      .replaceFirst(
+                                                        'Exception: ',
+                                                        '',
+                                                      );
                                                 });
                                                 return;
                                               }
@@ -479,16 +512,17 @@ Future<void> showTransactionForm(
                                             baseAmount = amount * localRate;
                                           }
                                           final chosen =
-                                              selectedCategory == 'Autre'
-                                                  ? (customCategory ?? '')
-                                                  : (selectedCategory ?? '');
+                                              selectedCategory == otherLabel
+                                              ? (customCategory ?? '')
+                                              : (selectedCategory ?? '');
                                           final categoryName = chosen.trim();
                                           final transaction = TransactionModel(
                                             id: existing?.id ?? '',
                                             amount: baseAmount,
                                             type: type,
-                                            categoryId:
-                                                categoryName.toLowerCase().trim(),
+                                            categoryId: categoryName
+                                                .toLowerCase()
+                                                .trim(),
                                             categoryName: categoryName,
                                             date: selectedDate,
                                             note: noteController.text.trim(),
@@ -496,14 +530,17 @@ Future<void> showTransactionForm(
                                           );
                                           if (existing == null) {
                                             await FirestoreService()
-                                                .addTransaction(uid, transaction);
+                                                .addTransaction(
+                                                  uid,
+                                                  transaction,
+                                                );
                                           } else {
                                             await FirestoreService()
                                                 .updateTransaction(
-                                              uid,
-                                              existing.id,
-                                              transaction,
-                                            );
+                                                  uid,
+                                                  existing.id,
+                                                  transaction,
+                                                );
                                           }
                                           if (context.mounted) {
                                             Navigator.pop(context);
@@ -511,11 +548,14 @@ Future<void> showTransactionForm(
                                         } catch (_) {
                                           if (context.mounted) {
                                             setState(() => saving = false);
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              const SnackBar(
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
                                                 content: Text(
-                                                  "Impossible d'enregistrer la transaction.",
+                                                  AppLocalizations.of(
+                                                    context,
+                                                  )!.transactionSaveFailed,
                                                 ),
                                               ),
                                             );
@@ -523,7 +563,9 @@ Future<void> showTransactionForm(
                                         }
                                       },
                                 child: Text(
-                                  existing == null ? 'Ajouter' : 'Mettre à jour',
+                                  existing == null
+                                      ? AppLocalizations.of(context)!.add
+                                      : AppLocalizations.of(context)!.update,
                                 ),
                               ),
                             ),

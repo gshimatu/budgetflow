@@ -45,17 +45,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     setState(() => _isSaving = true);
     final user = FirebaseAuth.instance.currentUser;
+    final localization = AppLocalizations.of(context)!;
     try {
       if (user == null) {
-        throw StateError('Utilisateur non connecté.');
+        throw StateError(localization.userNotSignedIn);
       }
       await user.updateDisplayName(_nameController.text.trim());
       final newEmail = _emailController.text.trim();
-      String message = 'Profil mis à jour.';
+      String message = localization.profileUpdated;
       if (newEmail.isNotEmpty && newEmail != user.email) {
         await user.verifyBeforeUpdateEmail(newEmail);
-        message =
-            'Un email de vérification a été envoyé. Validez-le pour changer votre email.';
+        message = localization.verifyEmailSent;
       }
       await user.reload();
       if (!mounted) return;
@@ -65,7 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } on FirebaseAuthException catch (e) {
       _showError(_mapAuthError(e.code));
     } catch (_) {
-      _showError('Impossible de mettre à jour le profil.');
+      _showError(localization.profileUpdateFailed);
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -85,8 +85,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _resetUserData() async {
     final user = FirebaseAuth.instance.currentUser;
+    final localization = AppLocalizations.of(context)!;
     if (user == null) {
-      _showError('Utilisateur non connecte.');
+      _showError(localization.userNotSignedIn);
       return;
     }
 
@@ -94,9 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       (provider) => provider.providerId == 'password',
     );
     if (!hasPasswordProvider) {
-      _showError(
-        'Connexion via un fournisseur externe. Utilisez ce fournisseur pour reinitialiser votre compte.',
-      );
+      _showError(localization.externalProviderReset);
       return;
     }
 
@@ -112,21 +111,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Reinitialiser les donnees'),
+              title: Text(AppLocalizations.of(context)!.resetDataTitle),
               content: Form(
                 key: formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'Cette action supprime toutes vos transactions et categories personnalisees.\nConfirmez avec votre mot de passe.',
-                    ),
+                    Text(AppLocalizations.of(context)!.resetDataMessage),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: passwordController,
                       obscureText: obscure,
                       decoration: InputDecoration(
-                        labelText: 'Mot de passe',
+                        labelText: AppLocalizations.of(context)!.password,
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           onPressed: () => setState(() => obscure = !obscure),
@@ -143,7 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Veuillez saisir votre mot de passe';
+                          return AppLocalizations.of(context)!.enterPassword;
                         }
                         return null;
                       },
@@ -156,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: saving
                       ? null
                       : () => Navigator.pop(context, false),
-                  child: const Text('Annuler'),
+                  child: Text(AppLocalizations.of(context)!.cancel),
                 ),
                 FilledButton(
                   style: FilledButton.styleFrom(
@@ -187,7 +184,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           } on FirebaseAuthException catch (e) {
                             _showError(_mapAuthError(e.code));
                           } catch (_) {
-                            _showError('Reinitialisation impossible.');
+                            _showError(
+                              AppLocalizations.of(context)!.resetDataFailed,
+                            );
                           } finally {
                             if (context.mounted) {
                               setState(() => saving = false);
@@ -203,7 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('Reinitialiser'),
+                      : Text(AppLocalizations.of(context)!.reset),
                 ),
               ],
             );
@@ -214,9 +213,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (confirmed != true) return;
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Donnees reinitialisees.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context)!.resetDone)),
+    );
   }
 
   Future<void> _deleteAccount() async {
@@ -224,21 +223,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Supprimer le compte'),
-          content: const Text(
-            'Cette action est irréversible. Voulez-vous continuer ?',
-          ),
+          title: Text(AppLocalizations.of(context)!.deleteAccountTitle),
+          content: Text(AppLocalizations.of(context)!.deleteAccountMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annuler'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFEF4444),
               ),
-              child: const Text('Supprimer'),
+              child: Text(AppLocalizations.of(context)!.delete),
             ),
           ],
         );
@@ -266,7 +263,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _sendFeedback() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      _showError('Utilisateur non connecte.');
+      _showError(AppLocalizations.of(context)!.userNotSignedIn);
       return;
     }
 
@@ -303,7 +300,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         children: [
                           Text(
-                            'Envoyer un commentaire',
+                            AppLocalizations.of(context)!.sendFeedback,
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
@@ -317,18 +314,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         initialValue: type,
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'Bug',
-                            child: Text('Signaler un bug'),
+                            child: Text(
+                              AppLocalizations.of(context)!.feedbackBug,
+                            ),
                           ),
                           DropdownMenuItem(
                             value: 'Suggestion',
-                            child: Text('Suggestion d\'amelioration'),
+                            child: Text(
+                              AppLocalizations.of(context)!.feedbackSuggestion,
+                            ),
                           ),
                           DropdownMenuItem(
-                            value: 'Commentaire',
-                            child: Text('Commentaire general'),
+                            value: 'Comment',
+                            child: Text(
+                              AppLocalizations.of(context)!.feedbackComment,
+                            ),
                           ),
                         ],
                         onChanged: (value) {
@@ -336,7 +339,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           setState(() => type = value);
                         },
                         decoration: InputDecoration(
-                          labelText: 'Type',
+                          labelText: AppLocalizations.of(context)!.feedbackType,
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest,
                           border: OutlineInputBorder(
@@ -351,7 +354,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         minLines: 3,
                         maxLines: 6,
                         decoration: InputDecoration(
-                          labelText: 'Votre message',
+                          labelText: AppLocalizations.of(
+                            context,
+                          )!.feedbackMessage,
                           alignLabelWithHint: true,
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest,
@@ -362,10 +367,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Veuillez saisir un message';
+                            return AppLocalizations.of(
+                              context,
+                            )!.feedbackMessageRequired;
                           }
                           if (value.trim().length < 5) {
-                            return 'Message trop court';
+                            return AppLocalizations.of(
+                              context,
+                            )!.feedbackMessageShort;
                           }
                           return null;
                         },
@@ -391,18 +400,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     if (!context.mounted) return;
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
+                                      SnackBar(
                                         content: Text(
-                                          'Merci pour votre retour.',
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.feedbackThanks,
                                         ),
                                       ),
                                     );
                                   } catch (_) {
                                     if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
+                                      SnackBar(
                                         content: Text(
-                                          'Envoi impossible. Reessaie plus tard.',
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.feedbackFailed,
                                         ),
                                       ),
                                     );
@@ -421,7 +434,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text('Envoyer'),
+                              : Text(AppLocalizations.of(context)!.send),
                         ),
                       ),
                     ],
@@ -438,7 +451,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _changePassword() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      _showError('Utilisateur non connecte.');
+      _showError(AppLocalizations.of(context)!.userNotSignedIn);
       return;
     }
 
@@ -446,9 +459,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       (provider) => provider.providerId == 'password',
     );
     if (!hasPasswordProvider) {
-      _showError(
-        'Connexion via un fournisseur externe. Changez le mot de passe depuis ce fournisseur.',
-      );
+      _showError(AppLocalizations.of(context)!.externalProviderChange);
       return;
     }
 
@@ -489,7 +500,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         children: [
                           Text(
-                            'Changer le mot de passe',
+                            AppLocalizations.of(context)!.changePassword,
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
@@ -505,7 +516,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         controller: oldController,
                         obscureText: obscureOld,
                         decoration: InputDecoration(
-                          labelText: 'Ancien mot de passe',
+                          labelText: AppLocalizations.of(context)!.oldPassword,
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
                             onPressed: () =>
@@ -525,7 +536,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Veuillez saisir l\'ancien mot de passe';
+                            return AppLocalizations.of(
+                              context,
+                            )!.enterOldPassword;
                           }
                           return null;
                         },
@@ -535,7 +548,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         controller: newController,
                         obscureText: obscureNew,
                         decoration: InputDecoration(
-                          labelText: 'Nouveau mot de passe',
+                          labelText: AppLocalizations.of(context)!.newPassword,
                           prefixIcon: const Icon(Icons.lock_reset),
                           suffixIcon: IconButton(
                             onPressed: () =>
@@ -555,7 +568,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Veuillez saisir un nouveau mot de passe';
+                            return AppLocalizations.of(
+                              context,
+                            )!.enterNewPassword;
                           }
                           if (value.length < 6) {
                             return 'Au moins 6 caracteres';
@@ -568,7 +583,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         controller: confirmController,
                         obscureText: obscureConfirm,
                         decoration: InputDecoration(
-                          labelText: 'Confirmer le mot de passe',
+                          labelText: AppLocalizations.of(
+                            context,
+                          )!.confirmPassword,
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
                             onPressed: () => setState(
@@ -589,10 +606,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Veuillez confirmer le mot de passe';
+                            return AppLocalizations.of(
+                              context,
+                            )!.confirmPasswordRequired;
                           }
                           if (value != newController.text) {
-                            return 'Les mots de passe ne correspondent pas';
+                            return AppLocalizations.of(
+                              context,
+                            )!.passwordMismatch;
                           }
                           return null;
                         },
@@ -607,6 +628,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   if (!formKey.currentState!.validate()) {
                                     return;
                                   }
+                                  final scaffoldContext = context;
+                                  final localization = AppLocalizations.of(
+                                    context,
+                                  )!;
                                   setState(() => saving = true);
                                   try {
                                     final email = user.email;
@@ -627,11 +652,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       newController.text,
                                     );
                                     if (!mounted) return;
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
+                                    Navigator.pop(scaffoldContext);
+                                    ScaffoldMessenger.of(
+                                      scaffoldContext,
+                                    ).showSnackBar(
+                                      SnackBar(
                                         content: Text(
-                                          'Mot de passe mis a jour.',
+                                          localization.passwordUpdated,
                                         ),
                                       ),
                                     );
@@ -639,7 +666,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     _showError(_mapAuthError(e.code));
                                   } catch (_) {
                                     _showError(
-                                      'Impossible de changer le mot de passe.',
+                                      localization.passwordUpdateFailed,
                                     );
                                   } finally {
                                     if (mounted) {
@@ -656,7 +683,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text('Mettre a jour'),
+                              : Text(AppLocalizations.of(context)!.update),
                         ),
                       ),
                     ],
@@ -680,17 +707,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     switch (code) {
       case 'wrong-password':
       case 'invalid-credential':
-        return 'Ancien mot de passe incorrect.';
+        return AppLocalizations.of(context)!.oldPasswordIncorrect;
       case 'weak-password':
-        return 'Mot de passe trop faible.';
+        return AppLocalizations.of(context)!.passwordTooShort;
       case 'requires-recent-login':
-        return 'Veuillez vous reconnecter pour continuer.';
+        return AppLocalizations.of(context)!.reauthenticateToContinue;
       case 'email-already-in-use':
-        return 'Cet email est déjà utilisé.';
+        return AppLocalizations.of(context)!.emailAlreadyUsed;
       case 'invalid-email':
-        return 'Adresse email invalide.';
+        return AppLocalizations.of(context)!.invalidEmail;
       default:
-        return 'Une erreur est survenue.';
+        return AppLocalizations.of(context)!.genericError;
     }
   }
 
@@ -703,9 +730,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Profil')),
-        body: const Center(
-          child: Text('Connectez-vous pour voir votre profil.'),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)!.profileTitle)),
+        body: Center(
+          child: Text(AppLocalizations.of(context)!.signInToSeeProfile),
         ),
       );
     }
@@ -719,7 +746,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Profil',
+                AppLocalizations.of(context)!.profileTitle,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -752,7 +779,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user.displayName ?? 'Utilisateur BudgetFlow',
+                            user.displayName ??
+                                AppLocalizations.of(context)!.defaultUserName,
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
                                   color: Colors.white,
@@ -761,7 +789,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            user.email ?? 'email@exemple.com',
+                            user.email ??
+                                AppLocalizations.of(context)!.defaultUserEmail,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: Colors.white70),
                           ),
@@ -772,7 +801,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              _SectionTitle(title: 'Informations personnelles'),
+              _SectionTitle(title: AppLocalizations.of(context)!.personalInfo),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -794,7 +823,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       TextFormField(
                         controller: _nameController,
                         decoration: InputDecoration(
-                          labelText: 'Nom complet',
+                          labelText: AppLocalizations.of(context)!.fullName,
                           prefixIcon: const Icon(Icons.person_outline),
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest,
@@ -805,7 +834,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Veuillez saisir votre nom';
+                            return AppLocalizations.of(context)!.enterName;
                           }
                           return null;
                         },
@@ -815,7 +844,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
-                          labelText: 'Email',
+                          labelText: AppLocalizations.of(context)!.emailLabel,
                           prefixIcon: const Icon(Icons.mail_outline),
                           filled: true,
                           fillColor: scheme.surfaceContainerHighest,
@@ -826,10 +855,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Veuillez saisir votre email';
+                            return AppLocalizations.of(context)!.enterEmail;
                           }
                           if (!value.contains('@')) {
-                            return 'Email invalide';
+                            return AppLocalizations.of(context)!.invalidEmail;
                           }
                           return null;
                         },
@@ -852,7 +881,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text('Mettre à jour'),
+                              : Text(AppLocalizations.of(context)!.update),
                         ),
                       ),
                     ],
@@ -860,7 +889,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              _SectionTitle(title: 'Préférences'),
+              _SectionTitle(title: AppLocalizations.of(context)!.preferences),
               const SizedBox(height: 12),
               StreamBuilder<Map<String, dynamic>>(
                 stream: FirestoreService().watchUserProfile(user.uid),
@@ -883,7 +912,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     notifications: notifications,
                     weeklyReport: weeklyReport,
                     currency: currency,
-                    language: languageController.locale?.languageCode ?? language,
+                    language:
+                        languageController.locale?.languageCode ?? language,
                     onToggleNotifications: (value) {
                       FirestoreService().updateUserPreferences(
                         user.uid,
@@ -937,7 +967,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _SectionTitle(title: 'Résumé hebdomadaire'),
+                      _SectionTitle(
+                        title: AppLocalizations.of(context)!.weeklySummaryTitle,
+                      ),
                       const SizedBox(height: 12),
                       _WeeklyReportCard(
                         uid: user.uid,
@@ -949,7 +981,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                 },
               ),
-              _SectionTitle(title: 'Sécurité'),
+              _SectionTitle(title: AppLocalizations.of(context)!.security),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -969,7 +1001,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.lock_reset),
-                      title: const Text('Changer le mot de passe'),
+                      title: Text(AppLocalizations.of(context)!.changePassword),
                       onTap: _changePassword,
                     ),
                     const Divider(height: 1),
@@ -979,12 +1011,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Icons.restart_alt,
                         color: Color(0xFFFC7520),
                       ),
-                      title: const Text(
-                        'Reinitialiser mes donnees',
+                      title: Text(
+                        AppLocalizations.of(context)!.resetMyData,
                         style: TextStyle(color: Color(0xFFFC7520)),
                       ),
-                      subtitle: const Text(
-                        'Supprime toutes les transactions et categories.',
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.resetMyDataSubtitle,
                       ),
                       onTap: _resetUserData,
                     ),
@@ -992,7 +1024,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.logout),
-                      title: const Text('Se déconnecter'),
+                      title: Text(AppLocalizations.of(context)!.signOut),
                       onTap: _signOut,
                     ),
                     const Divider(height: 1),
@@ -1002,8 +1034,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Icons.delete_forever,
                         color: Color(0xFFEF4444),
                       ),
-                      title: const Text(
-                        'Supprimer mon compte',
+                      title: Text(
+                        AppLocalizations.of(context)!.deleteMyAccount,
                         style: TextStyle(color: Color(0xFFEF4444)),
                       ),
                       onTap: _deleteAccount,
@@ -1012,7 +1044,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              _SectionTitle(title: 'Commentaires'),
+              _SectionTitle(title: AppLocalizations.of(context)!.comments),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -1032,9 +1064,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.chat_bubble_outline),
-                      title: const Text('Envoyer un commentaire'),
-                      subtitle: const Text(
-                        'Signaler un bug ou proposer une amelioration.',
+                      title: Text(AppLocalizations.of(context)!.sendFeedback),
+                      subtitle: Text(
+                        AppLocalizations.of(context)!.sendFeedbackSubtitle,
                       ),
                       onTap: _sendFeedback,
                     ),
@@ -1100,8 +1132,6 @@ class _PreferencesCardState extends State<_PreferencesCard> {
   bool _initialized = false;
   bool _savingCurrency = false;
   bool _savingLanguage = false;
-  double _progress = 0;
-
   final _currencies = const ['CDF', 'USD', 'EUR', 'GBP', 'ZAR', 'NGN'];
   final _languages = const ['fr', 'en'];
 
@@ -1152,8 +1182,8 @@ class _PreferencesCardState extends State<_PreferencesCard> {
         children: [
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Notifications'),
-            subtitle: const Text('Alertes sur vos dépenses'),
+            title: Text(AppLocalizations.of(context)!.notifications),
+            subtitle: Text(AppLocalizations.of(context)!.expenseAlerts),
             value: _notifications,
             onChanged: (value) {
               setState(() => _notifications = value);
@@ -1163,8 +1193,8 @@ class _PreferencesCardState extends State<_PreferencesCard> {
           const Divider(height: 1),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Rapport hebdo'),
-            subtitle: const Text('Résumé chaque lundi'),
+            title: Text(AppLocalizations.of(context)!.weeklyReport),
+            subtitle: Text(AppLocalizations.of(context)!.weeklySummary),
             value: _weeklyReport,
             onChanged: (value) {
               setState(() => _weeklyReport = value);
@@ -1176,7 +1206,7 @@ class _PreferencesCardState extends State<_PreferencesCard> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Devise par defaut',
+                AppLocalizations.of(context)!.defaultCurrency,
                 style: Theme.of(context).textTheme.labelLarge,
               ),
               const SizedBox(height: 8),
@@ -1211,17 +1241,18 @@ class _PreferencesCardState extends State<_PreferencesCard> {
                   onPressed: (_pendingCurrency == _currency || _savingCurrency)
                       ? null
                       : () async {
+                          final scaffoldContext = context;
+                          final localization = AppLocalizations.of(context)!;
                           setState(() {
                             _savingCurrency = true;
-                            _progress = 0;
                           });
                           if (!mounted) return;
                           showDialog(
-                            context: context,
+                            context: scaffoldContext,
                             barrierDismissible: false,
                             builder: (context) {
                               return AlertDialog(
-                                title: const Text('Conversion en cours'),
+                                title: Text(localization.currencyUpdatingTitle),
                                 content: Row(
                                   children: [
                                     const SizedBox(
@@ -1234,7 +1265,7 @@ class _PreferencesCardState extends State<_PreferencesCard> {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
-                                        'Mise a jour de la devise...',
+                                        localization.currencyUpdatingBody,
                                       ),
                                     ),
                                   ],
@@ -1245,23 +1276,25 @@ class _PreferencesCardState extends State<_PreferencesCard> {
                           try {
                             await widget.onCurrencyChanged(_pendingCurrency);
                             if (!mounted) return;
-                            Navigator.pop(context);
+                            Navigator.pop(scaffoldContext);
                             setState(() {
                               _currency = _pendingCurrency;
                               _savingCurrency = false;
                             });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Devise mise a jour.'),
+                            ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                              SnackBar(
+                                content: Text(localization.currencyUpdated),
                               ),
                             );
                           } catch (_) {
                             if (!mounted) return;
-                            Navigator.pop(context);
+                            Navigator.pop(scaffoldContext);
                             setState(() => _savingCurrency = false);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Mise a jour impossible.'),
+                            ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  localization.currencyUpdateFailed,
+                                ),
                               ),
                             );
                           }
@@ -1275,7 +1308,7 @@ class _PreferencesCardState extends State<_PreferencesCard> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('Valider la devise'),
+                      : Text(AppLocalizations.of(context)!.validateCurrency),
                 ),
               ),
             ],
@@ -1310,9 +1343,9 @@ class _PreferencesCardState extends State<_PreferencesCard> {
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.language),
                   filled: true,
-                  fillColor: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHighest,
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -1326,6 +1359,8 @@ class _PreferencesCardState extends State<_PreferencesCard> {
                   onPressed: (_pendingLanguage == _language || _savingLanguage)
                       ? null
                       : () async {
+                          final scaffoldContext = context;
+                          final localization = AppLocalizations.of(context)!;
                           setState(() => _savingLanguage = true);
                           try {
                             await widget.onLanguageChanged(_pendingLanguage);
@@ -1334,20 +1369,18 @@ class _PreferencesCardState extends State<_PreferencesCard> {
                               _language = _pendingLanguage;
                               _savingLanguage = false;
                             });
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            ScaffoldMessenger.of(scaffoldContext).showSnackBar(
                               SnackBar(
-                                content: Text(
-                                  AppLocalizations.of(context)!.languageUpdated,
-                                ),
+                                content: Text(localization.languageUpdated),
                               ),
                             );
                           } catch (_) {
                             if (!mounted) return;
                             setState(() => _savingLanguage = false);
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            ScaffoldMessenger.of(scaffoldContext).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  AppLocalizations.of(context)!.languageUpdateFailed,
+                                  localization.languageUpdateFailed,
                                 ),
                               ),
                             );
@@ -1373,8 +1406,12 @@ class _PreferencesCardState extends State<_PreferencesCard> {
               return SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 secondary: const Icon(Icons.dark_mode_outlined),
-                title: const Text('Mode sombre'),
-                subtitle: Text(themeController.isDark ? 'Sombre' : 'Clair'),
+                title: Text(AppLocalizations.of(context)!.darkMode),
+                subtitle: Text(
+                  themeController.isDark
+                      ? AppLocalizations.of(context)!.darkModeDark
+                      : AppLocalizations.of(context)!.darkModeLight,
+                ),
                 value: themeController.isDark,
                 onChanged: (value) {
                   themeController.setDarkMode(value);
@@ -1427,7 +1464,7 @@ class _WeeklyReportCard extends StatelessWidget {
               .where((tx) => tx.date.isAfter(start) && tx.date.isBefore(end))
               .toList();
           if (weekly.isEmpty) {
-            return const Text('Aucune transaction cette semaine.');
+            return Text(AppLocalizations.of(context)!.noWeeklyTransactions);
           }
           double income = 0;
           double expense = 0;
@@ -1452,27 +1489,30 @@ class _WeeklyReportCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Semaine du ${DateFormat('dd MMM').format(start)} au ${DateFormat('dd MMM').format(end)}',
+                AppLocalizations.of(context)!.weeklySummaryRange(
+                  DateFormat('dd MMM').format(start),
+                  DateFormat('dd MMM').format(end),
+                ),
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: Colors.black54),
               ),
               const SizedBox(height: 12),
               _WeeklyLine(
-                label: 'Revenus',
+                label: AppLocalizations.of(context)!.income,
                 value: _formatMoney(income, currency, rate),
                 color: const Color(0xFF16A34A),
               ),
               const SizedBox(height: 6),
               _WeeklyLine(
-                label: 'Dépenses',
+                label: AppLocalizations.of(context)!.expenses,
                 value: _formatMoney(expense, currency, rate),
                 color: const Color(0xFFEF4444),
               ),
               const SizedBox(height: 10),
               if (topCategory != null)
                 Text(
-                  'Catégorie principale : ${topCategory.key}',
+                  AppLocalizations.of(context)!.topCategory(topCategory.key),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
             ],

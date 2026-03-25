@@ -230,4 +230,347 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get today => 'Aujourd\'hui';
+
+  @override
+  String get newTransaction => 'Nouvelle transaction';
+
+  @override
+  String get editTransaction => 'Modifier la transaction';
+
+  @override
+  String get type => 'Type';
+
+  @override
+  String get expense => 'Depense';
+
+  @override
+  String get category => 'Categorie';
+
+  @override
+  String get other => 'Autre';
+
+  @override
+  String get categoryName => 'Nom de la categorie';
+
+  @override
+  String get noteOptional => 'Note (optionnel)';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get choose => 'Choisir';
+
+  @override
+  String amountEquivalent(Object amount) {
+    return 'Equivalent : $amount';
+  }
+
+  @override
+  String get converting => 'Conversion en cours...';
+
+  @override
+  String get invalidRate => 'Taux invalide';
+
+  @override
+  String get saveFailed => 'Impossible d\'enregistrer.';
+
+  @override
+  String get transactionSaveFailed =>
+      'Impossible d\'enregistrer la transaction.';
+
+  @override
+  String get statsTitle => 'Statistiques';
+
+  @override
+  String get signInToSeeStats => 'Connectez-vous pour voir vos statistiques.';
+
+  @override
+  String get statsNoTransactions => 'Aucune transaction pour le moment.';
+
+  @override
+  String get expensesBreakdown => 'Repartition des depenses';
+
+  @override
+  String get monthlyEvolution => 'Evolution mensuelle';
+
+  @override
+  String get dailyExpenseTrendTitle =>
+      'Tendance (polygone) - Depenses journaliere';
+
+  @override
+  String get monthLabel => 'Mois';
+
+  @override
+  String get yearLabel => 'Annee';
+
+  @override
+  String get balanceLabel => 'Solde';
+
+  @override
+  String get monthlyEvolutionNote =>
+      'Evolution sur les 6 derniers mois affiches.';
+
+  @override
+  String get dailyEvolutionNote =>
+      'Evolution quotidienne des depenses pour le mois selectionne.';
+
+  @override
+  String get profileTitle => 'Profil';
+
+  @override
+  String get personalInfo => 'Informations personnelles';
+
+  @override
+  String get fullName => 'Nom complet';
+
+  @override
+  String get emailLabel => 'Email';
+
+  @override
+  String get updateProfile => 'Mettre a jour';
+
+  @override
+  String get profileUpdated => 'Profil mis a jour.';
+
+  @override
+  String get verifyEmailSent =>
+      'Un email de verification a ete envoye. Validez-le pour changer votre email.';
+
+  @override
+  String get profileUpdateFailed => 'Impossible de mettre a jour le profil.';
+
+  @override
+  String get userNotSignedIn => 'Utilisateur non connecte.';
+
+  @override
+  String get resetDataTitle => 'Reinitialiser les donnees';
+
+  @override
+  String get resetDataMessage =>
+      'Cette action supprime toutes vos transactions et categories personnalisees.\nConfirmez avec votre mot de passe.';
+
+  @override
+  String get password => 'Mot de passe';
+
+  @override
+  String get reset => 'Reinitialiser';
+
+  @override
+  String get resetDone => 'Donnees reinitialisees.';
+
+  @override
+  String get resetDataFailed => 'Impossible de reinitialiser les donnees.';
+
+  @override
+  String get defaultUserName => 'Utilisateur';
+
+  @override
+  String get defaultUserEmail => 'Pas d\'email';
+
+  @override
+  String get selectCategory => 'Veuillez selectionner une categorie';
+
+  @override
+  String get enterCategoryName => 'Veuillez saisir un nom de categorie';
+
+  @override
+  String get deleteAccountTitle => 'Supprimer le compte';
+
+  @override
+  String get deleteAccountMessage =>
+      'Cette action est irreversible. Voulez-vous continuer ?';
+
+  @override
+  String get deleteFailed => 'Suppression impossible. Reessaie plus tard.';
+
+  @override
+  String get sendFeedback => 'Envoyer un commentaire';
+
+  @override
+  String get feedbackType => 'Type';
+
+  @override
+  String get feedbackBug => 'Signaler un bug';
+
+  @override
+  String get feedbackSuggestion => 'Suggestion d\'amelioration';
+
+  @override
+  String get feedbackComment => 'Commentaire general';
+
+  @override
+  String get feedbackMessage => 'Votre message';
+
+  @override
+  String get feedbackMessageRequired => 'Veuillez saisir un message';
+
+  @override
+  String get feedbackMessageShort => 'Message trop court';
+
+  @override
+  String get feedbackThanks => 'Merci pour votre retour.';
+
+  @override
+  String get feedbackFailed => 'Envoi impossible. Reessaie plus tard.';
+
+  @override
+  String get changePassword => 'Changer le mot de passe';
+
+  @override
+  String get oldPassword => 'Ancien mot de passe';
+
+  @override
+  String get newPassword => 'Nouveau mot de passe';
+
+  @override
+  String get confirmPassword => 'Confirmer le mot de passe';
+
+  @override
+  String get passwordTooShort => 'Mot de passe trop court';
+
+  @override
+  String get passwordMismatch => 'Les mots de passe ne correspondent pas';
+
+  @override
+  String get passwordUpdated => 'Mot de passe mis a jour.';
+
+  @override
+  String get passwordUpdateFailed =>
+      'Impossible de mettre a jour le mot de passe.';
+
+  @override
+  String get externalProviderReset =>
+      'Connexion via un fournisseur externe. Utilisez ce fournisseur pour reinitialiser votre compte.';
+
+  @override
+  String get externalProviderChange =>
+      'Connexion via un fournisseur externe. Changez le mot de passe depuis ce fournisseur.';
+
+  @override
+  String get signOut => 'Se deconnecter';
+
+  @override
+  String get preferences => 'Preferences';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get expenseAlerts => 'Alertes sur vos depenses';
+
+  @override
+  String get weeklyReport => 'Rapport hebdo';
+
+  @override
+  String get weeklySummary => 'Resume chaque lundi';
+
+  @override
+  String get defaultCurrency => 'Devise par defaut';
+
+  @override
+  String get validateCurrency => 'Valider la devise';
+
+  @override
+  String get currencyUpdatingTitle => 'Conversion en cours';
+
+  @override
+  String get currencyUpdatingBody => 'Mise a jour de la devise...';
+
+  @override
+  String get currencyUpdated => 'Devise mise a jour.';
+
+  @override
+  String get currencyUpdateFailed => 'Mise a jour impossible.';
+
+  @override
+  String get darkMode => 'Mode sombre';
+
+  @override
+  String get darkModeLight => 'Clair';
+
+  @override
+  String get darkModeDark => 'Sombre';
+
+  @override
+  String get weeklySummaryTitle => 'Resume hebdomadaire';
+
+  @override
+  String get noWeeklyTransactions => 'Aucune transaction cette semaine.';
+
+  @override
+  String topCategory(Object category) {
+    return 'Categorie principale : $category';
+  }
+
+  @override
+  String get security => 'Securite';
+
+  @override
+  String get resetMyData => 'Reinitialiser mes donnees';
+
+  @override
+  String get resetMyDataSubtitle =>
+      'Supprime toutes les transactions et categories.';
+
+  @override
+  String get deleteMyAccount => 'Supprimer mon compte';
+
+  @override
+  String get comments => 'Commentaires';
+
+  @override
+  String get sendFeedbackSubtitle =>
+      'Signaler un bug ou proposer une amelioration.';
+
+  @override
+  String get signInToSeeProfile => 'Connectez-vous pour voir votre profil.';
+
+  @override
+  String get send => 'Envoyer';
+
+  @override
+  String get enterPassword => 'Veuillez saisir votre mot de passe';
+
+  @override
+  String get enterOldPassword => 'Veuillez saisir l\'ancien mot de passe';
+
+  @override
+  String get enterNewPassword => 'Veuillez saisir un nouveau mot de passe';
+
+  @override
+  String get confirmPasswordRequired => 'Veuillez confirmer le mot de passe';
+
+  @override
+  String get reauthenticateToContinue =>
+      'Veuillez vous reconnecter pour continuer.';
+
+  @override
+  String get enterName => 'Veuillez saisir votre nom';
+
+  @override
+  String get enterEmail => 'Veuillez saisir votre email';
+
+  @override
+  String get noExpenseThisMonth => 'Aucune depense pour ce mois.';
+
+  @override
+  String get noDataForPeriod => 'Aucune donnee pour cette periode.';
+
+  @override
+  String weeklySummaryRange(Object end, Object start) {
+    return 'Du $start au $end';
+  }
+
+  @override
+  String get oldPasswordIncorrect => 'L\'ancien mot de passe est incorrect.';
+
+  @override
+  String get emailAlreadyUsed => 'Email deja utilisee.';
+
+  @override
+  String get invalidEmail => 'Adresse email invalide.';
+
+  @override
+  String get genericError => 'Une erreur est survenue.';
 }

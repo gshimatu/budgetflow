@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../models/transaction_model.dart';
 import '../../services/firestore_service.dart';
@@ -30,9 +31,9 @@ class _StatsScreenState extends State<StatsScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Statistiques')),
-        body: const Center(
-          child: Text('Connectez-vous pour voir vos statistiques.'),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)!.statsTitle)),
+        body: Center(
+          child: Text(AppLocalizations.of(context)!.signInToSeeStats),
         ),
       );
     }
@@ -40,7 +41,7 @@ class _StatsScreenState extends State<StatsScreen> {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: scheme.surface,
-      appBar: AppBar(title: const Text('Statistiques')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.statsTitle)),
       body: StreamBuilder<Map<String, dynamic>>(
         stream: FirestoreService().watchUserProfile(user.uid),
         builder: (context, profileSnapshot) {
@@ -57,8 +58,8 @@ class _StatsScreenState extends State<StatsScreen> {
           }
           final transactions = snapshot.data ?? [];
           if (transactions.isEmpty) {
-            return const Center(
-              child: Text('Aucune transaction pour le moment.'),
+            return Center(
+              child: Text(AppLocalizations.of(context)!.statsNoTransactions),
             );
           }
 
@@ -103,15 +104,15 @@ class _StatsScreenState extends State<StatsScreen> {
                 const SizedBox(height: 16),
                 _SummaryRow(summary: summary, currency: currency, rate: rate),
                 const SizedBox(height: 20),
-                _SectionTitle(title: 'Répartition des dépenses'),
+                _SectionTitle(title: AppLocalizations.of(context)!.expensesBreakdown),
                 const SizedBox(height: 12),
                 _PieChartCard(data: expensesByCategory, currency: currency, rate: rate),
                 const SizedBox(height: 20),
-                _SectionTitle(title: 'Évolution mensuelle'),
+                _SectionTitle(title: AppLocalizations.of(context)!.monthlyEvolution),
                 const SizedBox(height: 12),
                 _MonthlyChartCard(data: monthlySeries),
                 const SizedBox(height: 20),
-                _SectionTitle(title: 'Tendance (polygone) - Depenses journaliere'),
+                _SectionTitle(title: AppLocalizations.of(context)!.dailyExpenseTrendTitle),
                 const SizedBox(height: 12),
                 _DailyTrendChartCard(data: dailyExpenseSeries),
               ],
@@ -250,7 +251,7 @@ class _FilterRow extends StatelessWidget {
       children: [
         Expanded(
           child: _DropdownCard<int>(
-            label: 'Mois',
+            label: AppLocalizations.of(context)!.monthLabel,
             value: selectedMonth,
             items: List.generate(
               12,
@@ -265,7 +266,7 @@ class _FilterRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _DropdownCard<int>(
-            label: 'Année',
+            label: AppLocalizations.of(context)!.yearLabel,
             value: selectedYear,
             items: years
                 .map(
@@ -339,7 +340,7 @@ class _SummaryRow extends StatelessWidget {
       children: [
         Expanded(
           child: _StatCard(
-            title: 'Revenus',
+            title: AppLocalizations.of(context)!.income,
             value: _formatMoney(summary.totalIncome, currency, rate),
             color: const Color(0xFF33CC33),
             icon: Icons.trending_up,
@@ -357,7 +358,7 @@ class _SummaryRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            title: 'Solde',
+            title: AppLocalizations.of(context)!.balanceLabel,
             value: _formatMoney(summary.balance, currency, rate),
             color: const Color(0xFF0BC1DE),
             icon: Icons.account_balance_wallet,
@@ -439,8 +440,8 @@ class _PieChartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (data.isEmpty) {
-      return const _EmptyCard(
-        message: 'Aucune dépense pour ce mois.',
+      return _EmptyCard(
+        message: AppLocalizations.of(context)!.noExpenseThisMonth,
       );
     }
     final total = data.values.fold<double>(0, (a, b) => a + b);
@@ -569,8 +570,8 @@ class _MonthlyChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasData = data.any((item) => item.income > 0 || item.expense > 0);
     if (!hasData) {
-      return const _EmptyCard(
-        message: 'Aucune donnée pour cette période.',
+      return _EmptyCard(
+        message: AppLocalizations.of(context)!.noDataForPeriod,
       );
     }
     return Container(
@@ -591,11 +592,11 @@ class _MonthlyChartCard extends StatelessWidget {
         child: Column(
           children: [
             _ChartLegend(
-              items: const [
-                _LegendItem(label: 'Revenus', color: Color(0xFF33CC33)),
-                _LegendItem(label: 'Depenses', color: Color(0xFFFC7520)),
+              items: [
+                _LegendItem(label: AppLocalizations.of(context)!.income, color: Color(0xFF33CC33)),
+                _LegendItem(label: AppLocalizations.of(context)!.expenses, color: Color(0xFFFC7520)),
               ],
-              note: 'Evolution sur les 6 derniers mois affiches.',
+              note: AppLocalizations.of(context)!.monthlyEvolutionNote,
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -674,8 +675,8 @@ class _DailyTrendChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasData = data.any((item) => item.expense > 0);
     if (!hasData) {
-      return const _EmptyCard(
-        message: 'Aucune depense pour ce mois.',
+      return _EmptyCard(
+        message: AppLocalizations.of(context)!.noExpenseThisMonth,
       );
     }
 
@@ -697,10 +698,10 @@ class _DailyTrendChartCard extends StatelessWidget {
         child: Column(
           children: [
             _ChartLegend(
-              items: const [
-                _LegendItem(label: 'Depenses', color: Color(0xFFFC7520)),
+              items: [
+                _LegendItem(label: AppLocalizations.of(context)!.expenses, color: Color(0xFFFC7520)),
               ],
-              note: 'Evolution quotidienne des depenses pour le mois selectionne.',
+              note: AppLocalizations.of(context)!.dailyEvolutionNote,
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -775,8 +776,8 @@ class _PolygonChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasData = data.any((item) => item.income > 0 || item.expense > 0);
     if (!hasData) {
-      return const _EmptyCard(
-        message: 'Aucune donnee pour cette periode.',
+      return _EmptyCard(
+        message: AppLocalizations.of(context)!.noDataForPeriod,
       );
     }
 
@@ -798,9 +799,9 @@ class _PolygonChartCard extends StatelessWidget {
         child: Column(
           children: [
             _ChartLegend(
-              items: const [
-                _LegendItem(label: 'Revenus', color: Color(0xFF33CC33)),
-                _LegendItem(label: 'Depenses', color: Color(0xFFFC7520)),
+              items: [
+                _LegendItem(label: AppLocalizations.of(context)!.income, color: Color(0xFF33CC33)),
+                _LegendItem(label: AppLocalizations.of(context)!.expenses, color: Color(0xFFFC7520)),
               ],
               note: 'Courbes polygonales pour comparer les tendances.',
             ),
@@ -1030,7 +1031,7 @@ class _ChartLegend extends StatelessWidget {
 }
 
 class _LegendItem {
-  const _LegendItem({required this.label, required this.color});
+  _LegendItem({required this.label, required this.color});
 
   final String label;
   final Color color;
