@@ -1,7 +1,12 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../models/transaction_model.dart';
@@ -17,6 +22,9 @@ class StatsScreen extends StatefulWidget {
 class _StatsScreenState extends State<StatsScreen> {
   int? _selectedMonth;
   int? _selectedYear;
+  List<TransactionModel> _latestTransactions = const [];
+  String _currency = 'CDF';
+  double _rate = 1.0;
 
   @override
   void initState() {
@@ -28,12 +36,13 @@ class _StatsScreenState extends State<StatsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(AppLocalizations.of(context)!.statsTitle)),
+        appBar: AppBar(title: Text(l10n.statsTitle)),
         body: Center(
-          child: Text(AppLocalizations.of(context)!.signInToSeeStats),
+          child: Text(l10n.signInToSeeStats),
         ),
       );
     }
@@ -41,7 +50,16 @@ class _StatsScreenState extends State<StatsScreen> {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: scheme.surface,
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.statsTitle)),
+      appBar: AppBar(
+        title: Text(l10n.statsTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download_rounded),
+            tooltip: l10n.exportCsv,
+            onPressed: () => _exportCsv(context),
+          ),
+        ],
+      ),
       body: StreamBuilder<Map<String, dynamic>>(
         stream: FirestoreService().watchUserProfile(user.uid),
         builder: (context, profileSnapshot) {
@@ -50,6 +68,8 @@ class _StatsScreenState extends State<StatsScreen> {
               (profile['preferences'] as Map?)?.cast<String, dynamic>() ?? {};
           final currency = prefs['currency'] as String? ?? 'CDF';
           final rate = (prefs['rate'] as num?)?.toDouble() ?? 1.0;
+          _currency = currency;
+          _rate = rate;
           return StreamBuilder<List<TransactionModel>>(
             stream: FirestoreService().watchTransactions(user.uid),
             builder: (context, snapshot) {
@@ -57,6 +77,7 @@ class _StatsScreenState extends State<StatsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final transactions = snapshot.data ?? [];
+          _latestTransactions = transactions;
           if (transactions.isEmpty) {
             return Center(
               child: Text(AppLocalizations.of(context)!.statsNoTransactions),
@@ -123,6 +144,85 @@ class _StatsScreenState extends State<StatsScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _exportCsv(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).toString();
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      helpText: l10n.exportSelectRange,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 1),
+      initialDateRange: DateTimeRange(
+        start: DateTime(now.year, now.month, 1),
+        end: DateTime(now.year, now.month, now.day),
+      ),
+    );
+    if (!mounted) return;
+    if (picked == null) return;
+
+    final start = DateTime(picked.start.year, picked.start.month, picked.start.day);
+    final end = DateTime(picked.end.year, picked.end.month, picked.end.day, 23, 59, 59, 999);
+
+    final filtered = _latestTransactions
+        .where((tx) => !tx.date.isBefore(start) && !tx.date.isAfter(end))
+        .toList();
+
+    if (filtered.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.exportNoData)),
+      );
+      return;
+    }
+
+    final summary = _buildSummary(filtered);
+    final monthly = _buildMonthlySummary(filtered);
+
+    final summaryCsv = _buildSummaryCsv(
+      l10n,
+      locale,
+      picked,
+      summary,
+      monthly,
+      _currency,
+      _rate,
+      filtered.length,
+    );
+
+    final detailsCsv = _buildDetailsCsv(
+      l10n,
+      locale,
+      filtered,
+      _currency,
+      _rate,
+    );
+
+    try {
+      final dir = await _getExportDirectory();
+      await dir.create(recursive: true);
+      final safeStart = DateFormat('yyyyMMdd').format(start);
+      final safeEnd = DateFormat('yyyyMMdd').format(end);
+      final summaryFile = File('${dir.path}/budgetflow_summary_${safeStart}_${safeEnd}.csv');
+      final detailsFile = File('${dir.path}/budgetflow_details_${safeStart}_${safeEnd}.csv');
+      await summaryFile.writeAsString('\uFEFF$summaryCsv');
+      await detailsFile.writeAsString('\uFEFF$detailsCsv');
+      await Share.shareXFiles(
+        [XFile(summaryFile.path), XFile(detailsFile.path)],
+        text: l10n.exportCsv,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.exportSaved)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.exportFailed)),
+      );
+    }
   }
 }
 
@@ -349,7 +449,7 @@ class _SummaryRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            title: 'Dépenses',
+            title: AppLocalizations.of(context)!.expenses,
             value: _formatMoney(summary.totalExpense, currency, rate),
             color: const Color(0xFFFC7520),
             icon: Icons.trending_down,
@@ -1041,4 +1141,154 @@ String _formatMoney(double value, String currency, double rate) {
   final formatter = NumberFormat.decimalPattern();
   return '${formatter.format((value * rate).round())} $currency';
 }
+
+class _MonthlySummary {
+  _MonthlySummary({required this.income, required this.expense});
+
+  final double income;
+  final double expense;
+
+  double get balance => income - expense;
+}
+
+Map<String, _MonthlySummary> _buildMonthlySummary(List<TransactionModel> items) {
+  final Map<String, double> income = {};
+  final Map<String, double> expense = {};
+
+  for (final item in items) {
+    final key = _monthKey(item.date);
+    if (_isIncome(item.type)) {
+      income[key] = (income[key] ?? 0) + item.amount;
+    } else {
+      expense[key] = (expense[key] ?? 0) + item.amount;
+    }
+  }
+
+  final keys = <String>{...income.keys, ...expense.keys}.toList()..sort();
+  final Map<String, _MonthlySummary> result = {};
+  for (final key in keys) {
+    result[key] = _MonthlySummary(
+      income: income[key] ?? 0,
+      expense: expense[key] ?? 0,
+    );
+  }
+  return result;
+}
+
+String _buildSummaryCsv(
+  AppLocalizations l10n,
+  String locale,
+  DateTimeRange range,
+  _SummaryData summary,
+  Map<String, _MonthlySummary> monthly,
+  String currency,
+  double rate,
+  int count,
+) {
+  final rows = <List<String>>[];
+  rows.add([l10n.exportSummarySheet]);
+  rows.add([l10n.exportStart, DateFormat('yyyy-MM-dd', locale).format(range.start)]);
+  rows.add([l10n.exportEnd, DateFormat('yyyy-MM-dd', locale).format(range.end)]);
+  rows.add([l10n.exportTotalIncome, _formatMoney(summary.totalIncome, currency, rate)]);
+  rows.add([l10n.exportTotalExpense, _formatMoney(summary.totalExpense, currency, rate)]);
+  rows.add([l10n.exportBalance, _formatMoney(summary.balance, currency, rate)]);
+  rows.add([l10n.exportTransactionsCount, count.toString()]);
+  rows.add([]);
+  rows.add([
+    l10n.exportMonthLabel,
+    l10n.exportTotalIncome,
+    l10n.exportTotalExpense,
+    l10n.exportBalance,
+  ]);
+  for (final entry in monthly.entries) {
+    final parts = entry.key.split('-');
+    final monthDate = DateTime(int.parse(parts[0]), int.parse(parts[1]));
+    rows.add([
+      DateFormat('MMM yyyy', locale).format(monthDate),
+      _formatMoney(entry.value.income, currency, rate),
+      _formatMoney(entry.value.expense, currency, rate),
+      _formatMoney(entry.value.balance, currency, rate),
+    ]);
+  }
+  return _toCsv(rows);
+}
+
+String _buildDetailsCsv(
+  AppLocalizations l10n,
+  String locale,
+  List<TransactionModel> items,
+  String currency,
+  double rate,
+) {
+  final rows = <List<String>>[];
+  rows.add([
+    l10n.exportDate,
+    l10n.exportTime,
+    l10n.exportType,
+    l10n.exportCategory,
+    l10n.exportAmount,
+    l10n.exportCurrency,
+    l10n.exportOriginalCurrency,
+    l10n.exportRate,
+    l10n.exportNote,
+  ]);
+
+  final sorted = List<TransactionModel>.from(items)
+    ..sort((a, b) => b.date.compareTo(a.date));
+
+  for (final tx in sorted) {
+    final dateLabel = DateFormat('yyyy-MM-dd', locale).format(tx.date);
+    final timeLabel = DateFormat('HH:mm', locale).format(tx.date);
+    final typeLabel = _isIncome(tx.type) ? l10n.income : l10n.expenses;
+    final categoryLabel = tx.categoryName?.isNotEmpty == true
+        ? tx.categoryName!
+        : tx.categoryId;
+    rows.add([
+      dateLabel,
+      timeLabel,
+      typeLabel,
+      categoryLabel,
+      _formatMoney(tx.amount, currency, rate),
+      currency,
+      tx.originalCurrency ?? '',
+      rate.toStringAsFixed(4),
+      tx.note ?? '',
+    ]);
+  }
+
+  return _toCsv(rows);
+}
+
+String _toCsv(List<List<String>> rows) {
+  return rows.map((row) => row.map(_csvEscape).join(',')).join('\n');
+}
+
+String _csvEscape(String value) {
+  final needsQuotes = value.contains(',') || value.contains('\n') || value.contains('"');
+  if (!needsQuotes) return value;
+  final escaped = value.replaceAll('"', '""');
+  return '"$escaped"';
+}
+
+Future<Directory> _getExportDirectory() async {
+  if (kIsWeb) {
+    return getTemporaryDirectory();
+  }
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    final dir = await getDownloadsDirectory();
+    if (dir != null) {
+      return Directory('${dir.path}${Platform.pathSeparator}BudgetFlow');
+    }
+  }
+  if (Platform.isAndroid) {
+    final dir = await getExternalStorageDirectory();
+    if (dir != null) {
+      return Directory('${dir.path}${Platform.pathSeparator}BudgetFlow');
+    }
+  }
+  return getApplicationDocumentsDirectory();
+}
+
+
+
 

@@ -1519,6 +1519,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Details:'**
   String get detailsLabel;
+
+  /// No description provided for @exportCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Export CSV'**
+  String get exportCsv;
+
+  /// No description provided for @exportSelectRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a period'**
+  String get exportSelectRange;
+
+  /// No description provided for @exportNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data for the selected period.'**
+  String get exportNoData;
+
+  /// No description provided for @exportSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'CSV files saved.'**
+  String get exportSaved;
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed.'**
+  String get exportFailed;
+
+  /// No description provided for @exportSummarySheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get exportSummarySheet;
+
+  /// No description provided for @exportDetailsSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get exportDetailsSheet;
+
+  /// No description provided for @exportStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get exportStart;
+
+  /// No description provided for @exportEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get exportEnd;
+
+  /// No description provided for @exportTotalIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Total income'**
+  String get exportTotalIncome;
+
+  /// No description provided for @exportTotalExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Total expenses'**
+  String get exportTotalExpense;
+
+  /// No description provided for @exportBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get exportBalance;
+
+  /// No description provided for @exportTransactionsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions count'**
+  String get exportTransactionsCount;
+
+  /// No description provided for @exportMonthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get exportMonthLabel;
+
+  /// No description provided for @exportDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get exportDate;
+
+  /// No description provided for @exportTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get exportTime;
+
+  /// No description provided for @exportType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get exportType;
+
+  /// No description provided for @exportCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get exportCategory;
+
+  /// No description provided for @exportAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get exportAmount;
+
+  /// No description provided for @exportCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get exportCurrency;
+
+  /// No description provided for @exportOriginalCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Original currency'**
+  String get exportOriginalCurrency;
+
+  /// No description provided for @exportRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate'**
+  String get exportRate;
+
+  /// No description provided for @exportNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get exportNote;
 }
 
 class _AppLocalizationsDelegate

@@ -742,4 +742,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailsLabel => 'Details:';
+
+  @override
+  String get exportCsv => 'Export CSV';
+
+  @override
+  String get exportSelectRange => 'Select a period';
+
+  @override
+  String get exportNoData => 'No data for the selected period.';
+
+  @override
+  String get exportSaved => 'CSV files saved.';
+
+  @override
+  String get exportFailed => 'Export failed.';
+
+  @override
+  String get exportSummarySheet => 'Summary';
+
+  @override
+  String get exportDetailsSheet => 'Details';
+
+  @override
+  String get exportStart => 'Start';
+
+  @override
+  String get exportEnd => 'End';
+
+  @override
+  String get exportTotalIncome => 'Total income';
+
+  @override
+  String get exportTotalExpense => 'Total expenses';
+
+  @override
+  String get exportBalance => 'Balance';
+
+  @override
+  String get exportTransactionsCount => 'Transactions count';
+
+  @override
+  String get exportMonthLabel => 'Month';
+
+  @override
+  String get exportDate => 'Date';
+
+  @override
+  String get exportTime => 'Time';
+
+  @override
+  String get exportType => 'Type';
+
+  @override
+  String get exportCategory => 'Category';
+
+  @override
+  String get exportAmount => 'Amount';
+
+  @override
+  String get exportCurrency => 'Currency';
+
+  @override
+  String get exportOriginalCurrency => 'Original currency';
+
+  @override
+  String get exportRate => 'Rate';
+
+  @override
+  String get exportNote => 'Note';
 }

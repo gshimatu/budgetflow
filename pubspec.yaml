@@ -48,6 +48,8 @@ dependencies:
   google_fonts: ^6.2.1
   flutter_dotenv: ^6.0.0
   flutter_localization: ^0.3.3
+  path_provider: ^2.1.5
+  share_plus: ^11.1.0
 
 dev_dependencies:
   flutter_test:
@@ -108,3 +110,4 @@ flutter_launcher_icons:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
