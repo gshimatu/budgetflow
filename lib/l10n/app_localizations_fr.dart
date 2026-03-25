@@ -825,4 +825,25 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get exportNote => 'Note';
+
+  @override
+  String get exportPreviewTitle => 'Apercu de l\'export';
+
+  @override
+  String get exportPreviewRange => 'Periode';
+
+  @override
+  String get exportPreviewSummary => 'Lignes resume';
+
+  @override
+  String get exportPreviewDetails => 'Lignes details';
+
+  @override
+  String get exportSaveLocation => 'Enregistre dans';
+
+  @override
+  String get exportStartExport => 'Exporter';
+
+  @override
+  String get exportCancel => 'Annuler';
 }

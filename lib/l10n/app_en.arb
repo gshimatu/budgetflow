@@ -261,5 +261,12 @@
   "exportCurrency": "Currency",
   "exportOriginalCurrency": "Original currency",
   "exportRate": "Rate",
-  "exportNote": "Note"
+  "exportNote": "Note",
+  "exportPreviewTitle": "Preview export",
+  "exportPreviewRange": "Period",
+  "exportPreviewSummary": "Summary rows",
+  "exportPreviewDetails": "Detail rows",
+  "exportSaveLocation": "Saved to",
+  "exportStartExport": "Export",
+  "exportCancel": "Cancel"
 }

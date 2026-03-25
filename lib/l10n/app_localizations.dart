@@ -1657,6 +1657,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note'**
   String get exportNote;
+
+  /// No description provided for @exportPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview export'**
+  String get exportPreviewTitle;
+
+  /// No description provided for @exportPreviewRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get exportPreviewRange;
+
+  /// No description provided for @exportPreviewSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary rows'**
+  String get exportPreviewSummary;
+
+  /// No description provided for @exportPreviewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Detail rows'**
+  String get exportPreviewDetails;
+
+  /// No description provided for @exportSaveLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to'**
+  String get exportSaveLocation;
+
+  /// No description provided for @exportStartExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get exportStartExport;
+
+  /// No description provided for @exportCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get exportCancel;
 }
 
 class _AppLocalizationsDelegate

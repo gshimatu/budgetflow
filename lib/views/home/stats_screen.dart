@@ -181,7 +181,7 @@ class _StatsScreenState extends State<StatsScreen> {
     final summary = _buildSummary(filtered);
     final monthly = _buildMonthlySummary(filtered);
 
-    final summaryCsv = _buildSummaryCsv(
+        final summaryCsv = _buildSummaryCsv(
       l10n,
       locale,
       picked,
@@ -200,6 +200,15 @@ class _StatsScreenState extends State<StatsScreen> {
       _rate,
     );
 
+    final proceed = await _showExportPreview(
+      context: context,
+      l10n: l10n,
+      range: picked,
+      summaryRows: monthly.length + 5,
+      detailsRows: filtered.length,
+    );
+    if (!proceed) return;
+
     try {
       final dir = await _getExportDirectory();
       await dir.create(recursive: true);
@@ -215,7 +224,7 @@ class _StatsScreenState extends State<StatsScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.exportSaved)),
+        SnackBar(content: Text('${l10n.exportSaved} ${l10n.exportSaveLocation}: ${dir.path}')),
       );
     } catch (_) {
       if (!mounted) return;
@@ -1288,6 +1297,13 @@ Future<Directory> _getExportDirectory() async {
   }
   return getApplicationDocumentsDirectory();
 }
+
+
+
+
+
+
+
 
 
 

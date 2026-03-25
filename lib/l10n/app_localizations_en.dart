@@ -811,4 +811,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exportNote => 'Note';
+
+  @override
+  String get exportPreviewTitle => 'Preview export';
+
+  @override
+  String get exportPreviewRange => 'Period';
+
+  @override
+  String get exportPreviewSummary => 'Summary rows';
+
+  @override
+  String get exportPreviewDetails => 'Detail rows';
+
+  @override
+  String get exportSaveLocation => 'Saved to';
+
+  @override
+  String get exportStartExport => 'Export';
+
+  @override
+  String get exportCancel => 'Cancel';
 }

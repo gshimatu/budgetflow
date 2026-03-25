@@ -261,5 +261,12 @@
   "exportCurrency": "Devise",
   "exportOriginalCurrency": "Devise d'origine",
   "exportRate": "Taux",
-  "exportNote": "Note"
+  "exportNote": "Note",
+  "exportPreviewTitle": "Apercu de l'export",
+  "exportPreviewRange": "Periode",
+  "exportPreviewSummary": "Lignes resume",
+  "exportPreviewDetails": "Lignes details",
+  "exportSaveLocation": "Enregistre dans",
+  "exportStartExport": "Exporter",
+  "exportCancel": "Annuler"
 }
