@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'controllers/admin_controller.dart';
@@ -8,6 +10,7 @@ import 'controllers/auth_controller.dart';
 import 'controllers/category_controller.dart';
 import 'controllers/stats_controller.dart';
 import 'controllers/theme_controller.dart';
+import 'controllers/language_controller.dart';
 import 'controllers/transaction_controller.dart';
 import 'controllers/user_controller.dart';
 import 'routes/app_routes.dart';
@@ -29,11 +32,20 @@ class BudgetFlowApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StatsController()),
         ChangeNotifierProvider(create: (_) => AdminController()),
         ChangeNotifierProvider(create: (_) => ThemeController()),
+        ChangeNotifierProvider(create: (_) => LanguageController()..loadLocale()),
       ],
-      child: Consumer<ThemeController>(
-        builder: (context, themeController, _) {
+      child: Consumer2<ThemeController, LanguageController>(
+        builder: (context, themeController, languageController, _) {
           return MaterialApp(
             title: AppConstants.appName,
+            locale: languageController.locale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
             theme: ThemeData(
               colorScheme:
                   ColorScheme.fromSeed(seedColor: AppConstants.seedColor),
