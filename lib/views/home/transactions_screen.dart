@@ -391,6 +391,7 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -405,7 +406,7 @@ class _SummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Solde actuel',
+            l10n.balanceTitle,
             style: Theme.of(context)
                 .textTheme
                 .titleMedium
@@ -424,7 +425,7 @@ class _SummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _MiniStat(
-                  label: 'Revenus',
+                  label: l10n.income,
                   value: _formatMoney(summary.totalIncome, currency, rate),
                   color: Colors.white,
                 ),
@@ -432,7 +433,7 @@ class _SummaryCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _MiniStat(
-                  label: 'Depenses',
+                  label: l10n.expenses,
                   value: _formatMoney(summary.totalExpense, currency, rate),
                   color: Colors.white,
                 ),
@@ -458,6 +459,7 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -567,7 +569,7 @@ class _TransactionTile extends StatelessWidget {
                       tx.originalCurrency != currency) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'Devise: ${tx.originalCurrency} -> $currency',
+                      AppLocalizations.of(context)!.currencyFromTo(tx.originalCurrency ?? '', currency),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
