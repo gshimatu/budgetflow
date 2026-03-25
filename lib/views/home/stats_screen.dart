@@ -229,7 +229,9 @@ class _StatsScreenState extends State<StatsScreen> {
         l10n: l10n,
         directory: dir,
       );
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('Export failed (file save): $e');
+      debugPrint(st.toString());
       try {
         final safeStart = DateFormat('yyyyMMdd').format(start);
         final safeEnd = DateFormat('yyyyMMdd').format(end);
@@ -254,10 +256,12 @@ class _StatsScreenState extends State<StatsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.exportSaved)),
         );
-      } catch (_) {
+      } catch (e2, st2) {
+        debugPrint('Export failed (share fallback): $e2');
+        debugPrint(st2.toString());
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.exportFailed)),
+          SnackBar(content: Text('${l10n.exportFailed} ${e2.toString()}')),
         );
       }
     }
@@ -1398,6 +1402,8 @@ Future<Directory> _getExportDirectory() async {
   }
   return getApplicationDocumentsDirectory();
 }
+
+
 
 
 
