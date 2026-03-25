@@ -143,7 +143,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             borderSide: BorderSide.none,
                           ),
                         ),
-                        initialValue: '',
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return l10n.enterCategoryName;
