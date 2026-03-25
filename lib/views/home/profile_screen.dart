@@ -874,11 +874,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final currency = prefs['currency'] as String? ?? 'CDF';
                   final language = prefs['language'] as String? ?? 'fr';
                   final languageController = context.read<LanguageController>();
+                  if (languageController.locale == null) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      languageController.setLocaleFromCode(language);
+                    });
+                  }
                   return _PreferencesCard(
                     notifications: notifications,
                     weeklyReport: weeklyReport,
                     currency: currency,
-                    language: language,
+                    language: languageController.locale?.languageCode ?? language,
                     onToggleNotifications: (value) {
                       FirestoreService().updateUserPreferences(
                         user.uid,

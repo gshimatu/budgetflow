@@ -70,22 +70,20 @@ class FirestoreService {
     required String to,
     required double rate,
   }) async {
-    await _db.collection('users').doc(uid).set({
-      'preferences': {
-        'currency': to,
-        'baseCurrency': baseCurrency,
-        'rate': rate,
-      },
-    }, SetOptions(merge: true));
+    await updateUserPreferences(
+      uid,
+      currency: to,
+      baseCurrency: baseCurrency,
+      rate: rate,
+    );
   }
 
 
   Future<void> updateUserCurrency(String uid, String currency) async {
-    await _db.collection('users').doc(uid).set({
-      'preferences': {
-        'currency': currency,
-      },
-    }, SetOptions(merge: true));
+    await updateUserPreferences(
+      uid,
+      currency: currency,
+    );
   }
 
   Future<void> updateUserPreferences(
