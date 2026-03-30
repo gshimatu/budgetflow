@@ -49,3 +49,5 @@ app.*.map.json
 
 # Environnement
 *.env
+
+SIGNING_GUIDE.md
