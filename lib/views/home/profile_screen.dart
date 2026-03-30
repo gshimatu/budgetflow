@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../models/transaction_model.dart';
@@ -703,6 +704,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Future<void> _openWebsite() async {
+    const url = 'https://gauthiershimatu.kinsta.page/';
+    try {
+      if (await canLaunchUrl(Uri.parse(url))) {
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      _showError('Impossible d\'ouvrir le lien');
+    }
+  }
+
   String _mapAuthError(String code) {
     switch (code) {
       case 'wrong-password':
@@ -1071,6 +1083,90 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: _sendFeedback,
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              _SectionTitle(title: 'Mise à jour'),
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: _openWebsite,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [brandCyan, brandGreen],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0BC1DE).withValues(alpha: 0.3),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.2),
+                            ),
+                            child: const Icon(
+                              Icons.link,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Découvrir les autres applications',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Visitez notre site',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: Colors.white70),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: LinearProgressIndicator(
+                          value: 0.8,
+                          minHeight: 4,
+                          backgroundColor: Colors.white.withValues(alpha: 0.2),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
