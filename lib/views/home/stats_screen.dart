@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -9,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:syncfusion_flutter_xlsio/xlsio.dart' hide Column, Row;
 import 'package:budgetflow/l10n/app_localizations.dart';
 
 import '../../models/transaction_model.dart';
@@ -211,25 +211,6 @@ class _StatsScreenState extends State<StatsScreen> {
     final summary = _buildSummary(filtered);
     final monthly = _buildMonthlySummary(filtered);
 
-    final summaryCsv = _buildSummaryCsv(
-      l10n,
-      locale,
-      picked,
-      summary,
-      monthly,
-      _currency,
-      _rate,
-      filtered.length,
-    );
-
-    final detailsCsv = _buildDetailsCsv(
-      l10n,
-      locale,
-      filtered,
-      _currency,
-      _rate,
-    );
-
     final proceed = await _showExportPreview(
       context: context,
       l10n: l10n,
@@ -244,18 +225,45 @@ class _StatsScreenState extends State<StatsScreen> {
       await dir.create(recursive: true);
       final safeStart = DateFormat('yyyyMMdd').format(start);
       final safeEnd = DateFormat('yyyyMMdd').format(end);
+      final now = DateTime.now();
+
+      // Generate Excel files
+      final summaryBytes = _generateSummaryExcel(
+        l10n: l10n,
+        locale: locale,
+        range: picked,
+        summary: summary,
+        monthly: monthly,
+        currency: _currency,
+        rate: _rate,
+        generatedAt: now,
+        transactionCount: filtered.length,
+      );
+
+      final detailsBytes = _generateDetailsExcel(
+        l10n: l10n,
+        locale: locale,
+        transactions: filtered,
+        currency: _currency,
+        rate: _rate,
+        generatedAt: now,
+      );
+
       final summaryFile = File(
-        '${dir.path}/budgetflow_summary_${safeStart}_${safeEnd}.csv',
+        '${dir.path}/budgetflow_summary_${safeStart}_${safeEnd}.xlsx',
       );
       final detailsFile = File(
-        '${dir.path}/budgetflow_details_${safeStart}_${safeEnd}.csv',
+        '${dir.path}/budgetflow_details_${safeStart}_${safeEnd}.xlsx',
       );
-      await summaryFile.writeAsString('\uFEFF$summaryCsv');
-      await detailsFile.writeAsString('\uFEFF$detailsCsv');
+
+      await summaryFile.writeAsBytes(summaryBytes);
+      await detailsFile.writeAsBytes(detailsBytes);
+
       await Share.shareXFiles([
         XFile(summaryFile.path),
         XFile(detailsFile.path),
       ], text: l10n.exportCsv);
+
       if (!mounted) return;
       await _showExportSaved(context: context, l10n: l10n, directory: dir);
     } catch (e, st) {
@@ -264,18 +272,42 @@ class _StatsScreenState extends State<StatsScreen> {
       try {
         final safeStart = DateFormat('yyyyMMdd').format(start);
         final safeEnd = DateFormat('yyyyMMdd').format(end);
-        final summaryBytes = utf8.encode('\uFEFF$summaryCsv');
-        final detailsBytes = utf8.encode('\uFEFF$detailsCsv');
+        final now = DateTime.now();
+
+        // Generate Excel files for sharing
+        final summaryBytes = _generateSummaryExcel(
+          l10n: l10n,
+          locale: locale,
+          range: picked,
+          summary: summary,
+          monthly: monthly,
+          currency: _currency,
+          rate: _rate,
+          generatedAt: now,
+          transactionCount: filtered.length,
+        );
+
+        final detailsBytes = _generateDetailsExcel(
+          l10n: l10n,
+          locale: locale,
+          transactions: filtered,
+          currency: _currency,
+          rate: _rate,
+          generatedAt: now,
+        );
+
         await Share.shareXFiles([
           XFile.fromData(
-            summaryBytes,
-            mimeType: 'text/csv',
-            name: 'budgetflow_summary_${safeStart}_${safeEnd}.csv',
+            Uint8List.fromList(summaryBytes),
+            mimeType:
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            name: 'budgetflow_summary_${safeStart}_${safeEnd}.xlsx',
           ),
           XFile.fromData(
-            detailsBytes,
-            mimeType: 'text/csv',
-            name: 'budgetflow_details_${safeStart}_${safeEnd}.csv',
+            Uint8List.fromList(detailsBytes),
+            mimeType:
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            name: 'budgetflow_details_${safeStart}_${safeEnd}.xlsx',
           ),
         ], text: l10n.exportCsv);
         if (!mounted) return;
@@ -1014,127 +1046,6 @@ class _DailyTrendChartCard extends StatelessWidget {
   }
 }
 
-class _PolygonChartCard extends StatelessWidget {
-  const _PolygonChartCard({required this.data});
-
-  final List<_MonthlyPoint> data;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasData = data.any((item) => item.income > 0 || item.expense > 0);
-    if (!hasData) {
-      return _EmptyCard(message: AppLocalizations.of(context)!.noDataForPeriod);
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: SizedBox(
-        height: 260,
-        child: Column(
-          children: [
-            _ChartLegend(
-              items: [
-                _LegendItem(
-                  label: AppLocalizations.of(context)!.income,
-                  color: Color(0xFF33CC33),
-                ),
-                _LegendItem(
-                  label: AppLocalizations.of(context)!.expenses,
-                  color: Color(0xFFFC7520),
-                ),
-              ],
-              note: 'Courbes polygonales pour comparer les tendances.',
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: LineChart(
-                LineChartData(
-                  gridData: const FlGridData(show: false),
-                  borderData: FlBorderData(show: false),
-                  titlesData: FlTitlesData(
-                    leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          final index = value.toInt();
-                          if (index < 0 || index >= data.length) {
-                            return const SizedBox.shrink();
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Text(
-                              data[index].label,
-                              style: Theme.of(context).textTheme.labelSmall,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: data
-                          .asMap()
-                          .entries
-                          .map(
-                            (entry) => FlSpot(
-                              entry.key.toDouble(),
-                              entry.value.income,
-                            ),
-                          )
-                          .toList(),
-                      isCurved: false,
-                      color: const Color(0xFF33CC33),
-                      barWidth: 2.5,
-                      dotData: const FlDotData(show: true),
-                    ),
-                    LineChartBarData(
-                      spots: data
-                          .asMap()
-                          .entries
-                          .map(
-                            (entry) => FlSpot(
-                              entry.key.toDouble(),
-                              entry.value.expense,
-                            ),
-                          )
-                          .toList(),
-                      isCurved: false,
-                      color: const Color(0xFFFC7520),
-                      barWidth: 2.5,
-                      dotData: const FlDotData(show: true),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({required this.title});
 
@@ -1326,52 +1237,103 @@ Map<String, _MonthlySummary> _buildMonthlySummary(
   return result;
 }
 
-String _buildSummaryCsv(
-  AppLocalizations l10n,
-  String locale,
-  DateTimeRange range,
-  _SummaryData summary,
-  Map<String, _MonthlySummary> monthly,
-  String currency,
-  double rate,
-  int count,
-) {
-  final rows = <List<String>>[];
-  // Header section
-  rows.add([l10n.exportSummarySheet]);
-  rows.add([]);
+List<int> _generateSummaryExcel({
+  required AppLocalizations l10n,
+  required String locale,
+  required DateTimeRange range,
+  required _SummaryData summary,
+  required Map<String, _MonthlySummary> monthly,
+  required String currency,
+  required double rate,
+  required DateTime generatedAt,
+  required int transactionCount,
+}) {
+  // Create a new Excel workbook
+  final Workbook workbook = Workbook();
+  final Worksheet sheet = workbook.worksheets[0];
 
-  // General information
-  rows.add([
-    l10n.exportStart,
-    DateFormat('yyyy-MM-dd', locale).format(range.start),
-  ]);
-  rows.add([
-    l10n.exportEnd,
-    DateFormat('yyyy-MM-dd', locale).format(range.end),
-  ]);
-  rows.add([l10n.exportTransactionsCount, count.toString()]);
-  rows.add([]);
+  int row = 1;
+
+  // Title row
+  sheet
+      .getRangeByIndex(row, 1)
+      .setText('📊 BudgetFlow - ${l10n.exportSummarySheet}');
+  final titleCell = sheet.getRangeByIndex(row, 1);
+  titleCell.cellStyle.backColor = '#1F4788';
+  titleCell.cellStyle.fontColor = '#FFFFFF';
+  titleCell.cellStyle.bold = true;
+  titleCell.cellStyle.fontSize = 14;
+  row++;
+  row++;
+
+  // Generation info
+  final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss', locale);
+  sheet
+      .getRangeByIndex(row, 1)
+      .setText('Generated: ${dateFormat.format(generatedAt)}');
+  sheet.getRangeByIndex(row, 1).cellStyle.fontSize = 9;
+  sheet.getRangeByIndex(row, 1).cellStyle.italic = true;
+  row++;
+  sheet.getRangeByIndex(row, 1).setText('Generated by BudgetFlow');
+  sheet.getRangeByIndex(row, 1).cellStyle.fontSize = 9;
+  sheet.getRangeByIndex(row, 1).cellStyle.italic = true;
+  row++;
+  row++;
+
+  // Date range
+  sheet.getRangeByIndex(row, 1).setText(l10n.exportStart);
+  sheet.getRangeByIndex(row, 1).cellStyle.bold = true;
+  sheet
+      .getRangeByIndex(row, 2)
+      .setText(DateFormat('yyyy-MM-dd', locale).format(range.start));
+  row++;
+
+  sheet.getRangeByIndex(row, 1).setText(l10n.exportEnd);
+  sheet.getRangeByIndex(row, 1).cellStyle.bold = true;
+  sheet
+      .getRangeByIndex(row, 2)
+      .setText(DateFormat('yyyy-MM-dd', locale).format(range.end));
+  row++;
+
+  sheet.getRangeByIndex(row, 1).setText(l10n.exportTransactionsCount);
+  sheet.getRangeByIndex(row, 1).cellStyle.bold = true;
+  sheet.getRangeByIndex(row, 2).setNumber(transactionCount.toDouble());
+  row++;
+  row++;
 
   // Summary totals
-  rows.add([
-    l10n.exportTotalIncome,
-    _formatMoney(summary.totalIncome, currency, rate),
-  ]);
-  rows.add([
-    l10n.exportTotalExpense,
-    _formatMoney(summary.totalExpense, currency, rate),
-  ]);
-  rows.add([l10n.exportBalance, _formatMoney(summary.balance, currency, rate)]);
-  rows.add([]);
+  sheet.getRangeByIndex(row, 1).setText(l10n.exportTotalIncome);
+  sheet.getRangeByIndex(row, 1).cellStyle.bold = true;
+  sheet.getRangeByIndex(row, 2).setNumber(summary.totalIncome * rate);
+  sheet.getRangeByIndex(row, 3).setText(currency);
+  row++;
+
+  sheet.getRangeByIndex(row, 1).setText(l10n.exportTotalExpense);
+  sheet.getRangeByIndex(row, 1).cellStyle.bold = true;
+  sheet.getRangeByIndex(row, 2).setNumber(summary.totalExpense * rate);
+  sheet.getRangeByIndex(row, 3).setText(currency);
+  row++;
+
+  sheet.getRangeByIndex(row, 1).setText(l10n.exportBalance);
+  sheet.getRangeByIndex(row, 1).cellStyle.bold = true;
+  sheet.getRangeByIndex(row, 2).setNumber(summary.balance * rate);
+  sheet.getRangeByIndex(row, 3).setText(currency);
+  row++;
+  row++;
 
   // Monthly breakdown header
-  rows.add([
-    l10n.exportMonthLabel,
-    l10n.exportTotalIncome,
-    l10n.exportTotalExpense,
-    l10n.exportBalance,
-  ]);
+  sheet.getRangeByIndex(row, 1).setText(l10n.exportMonthLabel);
+  sheet.getRangeByIndex(row, 2).setText(l10n.exportTotalIncome);
+  sheet.getRangeByIndex(row, 3).setText(l10n.exportTotalExpense);
+  sheet.getRangeByIndex(row, 4).setText(l10n.exportBalance);
+
+  for (int col = 1; col <= 4; col++) {
+    final cell = sheet.getRangeByIndex(row, col);
+    cell.cellStyle.bold = true;
+    cell.cellStyle.backColor = '#4472C4';
+    cell.cellStyle.fontColor = '#FFFFFF';
+  }
+  row++;
 
   // Monthly data
   final sortedMonths = monthly.entries.toList()
@@ -1379,26 +1341,64 @@ String _buildSummaryCsv(
   for (final entry in sortedMonths) {
     final parts = entry.key.split('-');
     final monthDate = DateTime(int.parse(parts[0]), int.parse(parts[1]));
-    rows.add([
-      DateFormat('MMM yyyy', locale).format(monthDate),
-      _formatMoney(entry.value.income, currency, rate),
-      _formatMoney(entry.value.expense, currency, rate),
-      _formatMoney(entry.value.balance, currency, rate),
-    ]);
+
+    sheet
+        .getRangeByIndex(row, 1)
+        .setText(DateFormat('MMM yyyy', locale).format(monthDate));
+    sheet.getRangeByIndex(row, 2).setNumber(entry.value.income * rate);
+    sheet.getRangeByIndex(row, 3).setNumber(entry.value.expense * rate);
+    sheet.getRangeByIndex(row, 4).setNumber(entry.value.balance * rate);
+    row++;
   }
-  return _toCsv(rows);
+
+  final List<int> bytes = workbook.saveAsStream();
+  workbook.dispose();
+
+  return bytes;
 }
 
-String _buildDetailsCsv(
-  AppLocalizations l10n,
-  String locale,
-  List<TransactionModel> items,
-  String currency,
-  double rate,
-) {
-  final rows = <List<String>>[];
-  // Header row
-  rows.add([
+List<int> _generateDetailsExcel({
+  required AppLocalizations l10n,
+  required String locale,
+  required List<TransactionModel> transactions,
+  required String currency,
+  required double rate,
+  required DateTime generatedAt,
+}) {
+  // Create a new Excel workbook
+  final Workbook workbook = Workbook();
+  final Worksheet sheet = workbook.worksheets[0];
+
+  int row = 1;
+
+  // Title row
+  sheet
+      .getRangeByIndex(row, 1)
+      .setText('📋 BudgetFlow - ${l10n.exportDetailsSheet}');
+  final titleCell = sheet.getRangeByIndex(row, 1);
+  titleCell.cellStyle.backColor = '#1F4788';
+  titleCell.cellStyle.fontColor = '#FFFFFF';
+  titleCell.cellStyle.bold = true;
+  titleCell.cellStyle.fontSize = 14;
+  row++;
+  row++;
+
+  // Generation info
+  final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss', locale);
+  sheet
+      .getRangeByIndex(row, 1)
+      .setText('Generated: ${dateFormat.format(generatedAt)}');
+  sheet.getRangeByIndex(row, 1).cellStyle.fontSize = 9;
+  sheet.getRangeByIndex(row, 1).cellStyle.italic = true;
+  row++;
+  sheet.getRangeByIndex(row, 1).setText('Generated by BudgetFlow');
+  sheet.getRangeByIndex(row, 1).cellStyle.fontSize = 9;
+  sheet.getRangeByIndex(row, 1).cellStyle.italic = true;
+  row++;
+  row++;
+
+  // Table header
+  final headers = [
     l10n.exportDate,
     l10n.exportTime,
     l10n.exportType,
@@ -1408,13 +1408,20 @@ String _buildDetailsCsv(
     l10n.exportOriginalCurrency,
     l10n.exportRate,
     l10n.exportNote,
-  ]);
+  ];
 
-  // Sort by date (newest first)
-  final sorted = List<TransactionModel>.from(items)
-    ..sort((a, b) => b.date.compareTo(a.date));
+  for (int col = 0; col < headers.length; col++) {
+    final cell = sheet.getRangeByIndex(row, col + 1);
+    cell.setText(headers[col]);
+    cell.cellStyle.bold = true;
+    cell.cellStyle.backColor = '#4472C4';
+    cell.cellStyle.fontColor = '#FFFFFF';
+  }
+  row++;
 
   // Data rows
+  final sorted = List<TransactionModel>.from(transactions)
+    ..sort((a, b) => b.date.compareTo(a.date));
   for (final tx in sorted) {
     final dateLabel = DateFormat('yyyy-MM-dd', locale).format(tx.date);
     final timeLabel = DateFormat('HH:mm:ss', locale).format(tx.date);
@@ -1422,47 +1429,24 @@ String _buildDetailsCsv(
     final categoryLabel = tx.categoryName?.isNotEmpty == true
         ? tx.categoryName!
         : tx.categoryId;
-    final amountFormatted = _formatMoney(tx.amount, currency, rate);
-    final rateFormatted = rate.toStringAsFixed(4);
-    final noteLabel = tx.note ?? '';
 
-    rows.add([
-      dateLabel,
-      timeLabel,
-      typeLabel,
-      categoryLabel,
-      amountFormatted,
-      currency,
-      tx.originalCurrency ?? '',
-      rateFormatted,
-      noteLabel,
-    ]);
+    sheet.getRangeByIndex(row, 1).setText(dateLabel);
+    sheet.getRangeByIndex(row, 2).setText(timeLabel);
+    sheet.getRangeByIndex(row, 3).setText(typeLabel);
+    sheet.getRangeByIndex(row, 4).setText(categoryLabel);
+    sheet.getRangeByIndex(row, 5).setNumber(tx.amount * rate);
+    sheet.getRangeByIndex(row, 6).setText(currency);
+    sheet.getRangeByIndex(row, 7).setText(tx.originalCurrency ?? '');
+    sheet.getRangeByIndex(row, 8).setText(rate.toStringAsFixed(4));
+    sheet.getRangeByIndex(row, 9).setText(tx.note ?? '');
+
+    row++;
   }
 
-  return _toCsv(rows);
-}
+  final List<int> bytes = workbook.saveAsStream();
+  workbook.dispose();
 
-String _toCsv(List<List<String>> rows) {
-  return rows.map((row) => row.map(_csvEscape).join(',')).join('\n');
-}
-
-String _csvEscape(String value) {
-  // If value is empty, return as-is
-  if (value.isEmpty) return value;
-
-  // Check if value needs to be quoted
-  final needsQuotes =
-      value.contains(',') ||
-      value.contains('\n') ||
-      value.contains('"') ||
-      value.startsWith(' ') ||
-      value.endsWith(' ');
-
-  if (!needsQuotes) return value;
-
-  // Escape double quotes by doubling them
-  final escaped = value.replaceAll('"', '""');
-  return '"$escaped"';
+  return bytes;
 }
 
 Future<Directory> _getExportDirectory() async {
