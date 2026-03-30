@@ -43,9 +43,7 @@ class _StatsScreenState extends State<StatsScreen> {
     if (user == null) {
       return Scaffold(
         appBar: AppBar(title: Text(l10n.statsTitle)),
-        body: Center(
-          child: Text(l10n.signInToSeeStats),
-        ),
+        body: Center(child: Text(l10n.signInToSeeStats)),
       );
     }
 
@@ -75,78 +73,97 @@ class _StatsScreenState extends State<StatsScreen> {
           return StreamBuilder<List<TransactionModel>>(
             stream: FirestoreService().watchTransactions(user.uid),
             builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final transactions = snapshot.data ?? [];
-          _latestTransactions = transactions;
-          if (transactions.isEmpty) {
-            return Center(
-              child: Text(AppLocalizations.of(context)!.statsNoTransactions),
-            );
-          }
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final transactions = snapshot.data ?? [];
+              _latestTransactions = transactions;
+              if (transactions.isEmpty) {
+                return Center(
+                  child: Text(
+                    AppLocalizations.of(context)!.statsNoTransactions,
+                  ),
+                );
+              }
 
-          final years = _availableYears(transactions);
-          _selectedYear ??= years.first;
-          _selectedMonth ??= DateTime.now().month;
+              final years = _availableYears(transactions);
+              _selectedYear ??= years.first;
+              _selectedMonth ??= DateTime.now().month;
 
-          final filtered = _filterByMonth(
-            transactions,
-            _selectedYear!,
-            _selectedMonth!,
-          );
-          final summary = _buildSummary(filtered);
-          final expensesByCategory = _groupExpensesByCategory(filtered);
-          final monthlySeries = _buildMonthlySeries(
-            transactions,
-            _selectedYear!,
-            _selectedMonth!,
-          );
-          final dailyExpenseSeries = _buildDailyExpenseSeries(
-            transactions,
-            _selectedYear!,
-            _selectedMonth!,
-          );
+              final filtered = _filterByMonth(
+                transactions,
+                _selectedYear!,
+                _selectedMonth!,
+              );
+              final summary = _buildSummary(filtered);
+              final expensesByCategory = _groupExpensesByCategory(filtered);
+              final monthlySeries = _buildMonthlySeries(
+                transactions,
+                _selectedYear!,
+                _selectedMonth!,
+              );
+              final dailyExpenseSeries = _buildDailyExpenseSeries(
+                transactions,
+                _selectedYear!,
+                _selectedMonth!,
+              );
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _FilterRow(
-                  selectedMonth: _selectedMonth!,
-                  selectedYear: _selectedYear!,
-                  years: years,
-                  onMonthChanged: (value) {
-                    setState(() => _selectedMonth = value);
-                  },
-                  onYearChanged: (value) {
-                    setState(() => _selectedYear = value);
-                  },
+              return SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _FilterRow(
+                      selectedMonth: _selectedMonth!,
+                      selectedYear: _selectedYear!,
+                      years: years,
+                      onMonthChanged: (value) {
+                        setState(() => _selectedMonth = value);
+                      },
+                      onYearChanged: (value) {
+                        setState(() => _selectedYear = value);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _SummaryRow(
+                      summary: summary,
+                      currency: currency,
+                      rate: rate,
+                    ),
+                    const SizedBox(height: 20),
+                    _SectionTitle(
+                      title: AppLocalizations.of(context)!.expensesBreakdown,
+                    ),
+                    const SizedBox(height: 12),
+                    _PieChartCard(
+                      data: expensesByCategory,
+                      currency: currency,
+                      rate: rate,
+                    ),
+                    const SizedBox(height: 20),
+                    _SectionTitle(
+                      title: AppLocalizations.of(context)!.monthlyEvolution,
+                    ),
+                    const SizedBox(height: 12),
+                    _MonthlyChartCard(data: monthlySeries),
+                    const SizedBox(height: 20),
+                    _SectionTitle(
+                      title: AppLocalizations.of(
+                        context,
+                      )!.dailyExpenseTrendTitle,
+                    ),
+                    const SizedBox(height: 12),
+                    _DailyTrendChartCard(data: dailyExpenseSeries),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                _SummaryRow(summary: summary, currency: currency, rate: rate),
-                const SizedBox(height: 20),
-                _SectionTitle(title: AppLocalizations.of(context)!.expensesBreakdown),
-                const SizedBox(height: 12),
-                _PieChartCard(data: expensesByCategory, currency: currency, rate: rate),
-                const SizedBox(height: 20),
-                _SectionTitle(title: AppLocalizations.of(context)!.monthlyEvolution),
-                const SizedBox(height: 12),
-                _MonthlyChartCard(data: monthlySeries),
-                const SizedBox(height: 20),
-                _SectionTitle(title: AppLocalizations.of(context)!.dailyExpenseTrendTitle),
-                const SizedBox(height: 12),
-                _DailyTrendChartCard(data: dailyExpenseSeries),
-              ],
-            ),
+              );
+            },
           );
-        },
-      );
         },
       ),
     );
   }
+
   Future<void> _exportCsv(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).toString();
@@ -164,8 +181,20 @@ class _StatsScreenState extends State<StatsScreen> {
     if (!mounted) return;
     if (picked == null) return;
 
-    final start = DateTime(picked.start.year, picked.start.month, picked.start.day);
-    final end = DateTime(picked.end.year, picked.end.month, picked.end.day, 23, 59, 59, 999);
+    final start = DateTime(
+      picked.start.year,
+      picked.start.month,
+      picked.start.day,
+    );
+    final end = DateTime(
+      picked.end.year,
+      picked.end.month,
+      picked.end.day,
+      23,
+      59,
+      59,
+      999,
+    );
 
     final filtered = _latestTransactions
         .where((tx) => !tx.date.isBefore(start) && !tx.date.isAfter(end))
@@ -173,9 +202,9 @@ class _StatsScreenState extends State<StatsScreen> {
 
     if (filtered.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.exportNoData)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.exportNoData)));
       return;
     }
 
@@ -215,20 +244,20 @@ class _StatsScreenState extends State<StatsScreen> {
       await dir.create(recursive: true);
       final safeStart = DateFormat('yyyyMMdd').format(start);
       final safeEnd = DateFormat('yyyyMMdd').format(end);
-      final summaryFile = File('${dir.path}/budgetflow_summary_${safeStart}_${safeEnd}.csv');
-      final detailsFile = File('${dir.path}/budgetflow_details_${safeStart}_${safeEnd}.csv');
+      final summaryFile = File(
+        '${dir.path}/budgetflow_summary_${safeStart}_${safeEnd}.csv',
+      );
+      final detailsFile = File(
+        '${dir.path}/budgetflow_details_${safeStart}_${safeEnd}.csv',
+      );
       await summaryFile.writeAsString('\uFEFF$summaryCsv');
       await detailsFile.writeAsString('\uFEFF$detailsCsv');
-      await Share.shareXFiles(
-        [XFile(summaryFile.path), XFile(detailsFile.path)],
-        text: l10n.exportCsv,
-      );
+      await Share.shareXFiles([
+        XFile(summaryFile.path),
+        XFile(detailsFile.path),
+      ], text: l10n.exportCsv);
       if (!mounted) return;
-      await _showExportSaved(
-        context: context,
-        l10n: l10n,
-        directory: dir,
-      );
+      await _showExportSaved(context: context, l10n: l10n, directory: dir);
     } catch (e, st) {
       debugPrint('Export failed (file save): $e');
       debugPrint(st.toString());
@@ -237,25 +266,22 @@ class _StatsScreenState extends State<StatsScreen> {
         final safeEnd = DateFormat('yyyyMMdd').format(end);
         final summaryBytes = utf8.encode('\uFEFF$summaryCsv');
         final detailsBytes = utf8.encode('\uFEFF$detailsCsv');
-        await Share.shareXFiles(
-          [
-            XFile.fromData(
-              summaryBytes,
-              mimeType: 'text/csv',
-              name: 'budgetflow_summary_${safeStart}_${safeEnd}.csv',
-            ),
-            XFile.fromData(
-              detailsBytes,
-              mimeType: 'text/csv',
-              name: 'budgetflow_details_${safeStart}_${safeEnd}.csv',
-            ),
-          ],
-          text: l10n.exportCsv,
-        );
+        await Share.shareXFiles([
+          XFile.fromData(
+            summaryBytes,
+            mimeType: 'text/csv',
+            name: 'budgetflow_summary_${safeStart}_${safeEnd}.csv',
+          ),
+          XFile.fromData(
+            detailsBytes,
+            mimeType: 'text/csv',
+            name: 'budgetflow_details_${safeStart}_${safeEnd}.csv',
+          ),
+        ], text: l10n.exportCsv);
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.exportSaved)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.exportSaved)));
       } catch (e2, st2) {
         debugPrint('Export failed (share fallback): $e2');
         debugPrint(st2.toString());
@@ -542,7 +568,11 @@ class _DropdownCard<T> extends StatelessWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.summary, required this.currency, required this.rate});
+  const _SummaryRow({
+    required this.summary,
+    required this.currency,
+    required this.rate,
+  });
 
   final _SummaryData summary;
   final String currency;
@@ -626,17 +656,16 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             title,
-            style: Theme.of(context)
-                .textTheme
-                .labelMedium
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -645,7 +674,11 @@ class _StatCard extends StatelessWidget {
 }
 
 class _PieChartCard extends StatelessWidget {
-  const _PieChartCard({required this.data, required this.currency, required this.rate});
+  const _PieChartCard({
+    required this.data,
+    required this.currency,
+    required this.rate,
+  });
 
   final Map<String, double> data;
   final String currency;
@@ -727,12 +760,8 @@ class _PieChartCard extends StatelessWidget {
   }
 }
 
-
 class _DailyPoint {
-  const _DailyPoint({
-    required this.label,
-    required this.expense,
-  });
+  const _DailyPoint({required this.label, required this.expense});
 
   final String label;
   final double expense;
@@ -756,10 +785,8 @@ List<_DailyPoint> _buildDailyExpenseSeries(
 
   return List.generate(
     daysInMonth,
-    (index) => _DailyPoint(
-      label: (index + 1).toString(),
-      expense: totals[index],
-    ),
+    (index) =>
+        _DailyPoint(label: (index + 1).toString(), expense: totals[index]),
   );
 }
 
@@ -784,9 +811,7 @@ class _MonthlyChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasData = data.any((item) => item.income > 0 || item.expense > 0);
     if (!hasData) {
-      return _EmptyCard(
-        message: AppLocalizations.of(context)!.noDataForPeriod,
-      );
+      return _EmptyCard(message: AppLocalizations.of(context)!.noDataForPeriod);
     }
     return Container(
       padding: const EdgeInsets.all(16),
@@ -807,8 +832,14 @@ class _MonthlyChartCard extends StatelessWidget {
           children: [
             _ChartLegend(
               items: [
-                _LegendItem(label: AppLocalizations.of(context)!.income, color: Color(0xFF33CC33)),
-                _LegendItem(label: AppLocalizations.of(context)!.expenses, color: Color(0xFFFC7520)),
+                _LegendItem(
+                  label: AppLocalizations.of(context)!.income,
+                  color: Color(0xFF33CC33),
+                ),
+                _LegendItem(
+                  label: AppLocalizations.of(context)!.expenses,
+                  color: Color(0xFFFC7520),
+                ),
               ],
               note: AppLocalizations.of(context)!.monthlyEvolutionNote,
             ),
@@ -879,7 +910,6 @@ class _MonthlyChartCard extends StatelessWidget {
   }
 }
 
-
 class _DailyTrendChartCard extends StatelessWidget {
   const _DailyTrendChartCard({required this.data});
 
@@ -913,7 +943,10 @@ class _DailyTrendChartCard extends StatelessWidget {
           children: [
             _ChartLegend(
               items: [
-                _LegendItem(label: AppLocalizations.of(context)!.expenses, color: Color(0xFFFC7520)),
+                _LegendItem(
+                  label: AppLocalizations.of(context)!.expenses,
+                  color: Color(0xFFFC7520),
+                ),
               ],
               note: AppLocalizations.of(context)!.dailyEvolutionNote,
             ),
@@ -990,9 +1023,7 @@ class _PolygonChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasData = data.any((item) => item.income > 0 || item.expense > 0);
     if (!hasData) {
-      return _EmptyCard(
-        message: AppLocalizations.of(context)!.noDataForPeriod,
-      );
+      return _EmptyCard(message: AppLocalizations.of(context)!.noDataForPeriod);
     }
 
     return Container(
@@ -1014,8 +1045,14 @@ class _PolygonChartCard extends StatelessWidget {
           children: [
             _ChartLegend(
               items: [
-                _LegendItem(label: AppLocalizations.of(context)!.income, color: Color(0xFF33CC33)),
-                _LegendItem(label: AppLocalizations.of(context)!.expenses, color: Color(0xFFFC7520)),
+                _LegendItem(
+                  label: AppLocalizations.of(context)!.income,
+                  color: Color(0xFF33CC33),
+                ),
+                _LegendItem(
+                  label: AppLocalizations.of(context)!.expenses,
+                  color: Color(0xFFFC7520),
+                ),
               ],
               note: 'Courbes polygonales pour comparer les tendances.',
             ),
@@ -1026,12 +1063,15 @@ class _PolygonChartCard extends StatelessWidget {
                   gridData: const FlGridData(show: false),
                   borderData: FlBorderData(show: false),
                   titlesData: FlTitlesData(
-                    leftTitles:
-                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles:
-                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles:
-                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
@@ -1104,9 +1144,9 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
     );
   }
 }
@@ -1134,9 +1174,9 @@ class _EmptyCard extends StatelessWidget {
       child: Center(
         child: Text(
           message,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.black54,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
         ),
       ),
     );
@@ -1173,10 +1213,7 @@ class _PieLegend extends StatelessWidget {
               Container(
                 width: 10,
                 height: 10,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
               const SizedBox(width: 8),
               Expanded(child: Text(item.key)),
@@ -1193,10 +1230,7 @@ class _PieLegend extends StatelessWidget {
 }
 
 class _ChartLegend extends StatelessWidget {
-  const _ChartLegend({
-    required this.items,
-    required this.note,
-  });
+  const _ChartLegend({required this.items, required this.note});
 
   final List<_LegendItem> items;
   final String note;
@@ -1236,8 +1270,8 @@ class _ChartLegend extends StatelessWidget {
         Text(
           note,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -1252,8 +1286,9 @@ class _LegendItem {
 }
 
 String _formatMoney(double value, String currency, double rate) {
-  final formatter = NumberFormat.decimalPattern();
-  return '${formatter.format((value * rate).round())} $currency';
+  final actualValue = value * rate;
+  final formatter = NumberFormat('#,##0.00', 'en_US');
+  return '${formatter.format(actualValue)} $currency';
 }
 
 class _MonthlySummary {
@@ -1265,7 +1300,9 @@ class _MonthlySummary {
   double get balance => income - expense;
 }
 
-Map<String, _MonthlySummary> _buildMonthlySummary(List<TransactionModel> items) {
+Map<String, _MonthlySummary> _buildMonthlySummary(
+  List<TransactionModel> items,
+) {
   final Map<String, double> income = {};
   final Map<String, double> expense = {};
 
@@ -1300,21 +1337,46 @@ String _buildSummaryCsv(
   int count,
 ) {
   final rows = <List<String>>[];
+  // Header section
   rows.add([l10n.exportSummarySheet]);
-  rows.add([l10n.exportStart, DateFormat('yyyy-MM-dd', locale).format(range.start)]);
-  rows.add([l10n.exportEnd, DateFormat('yyyy-MM-dd', locale).format(range.end)]);
-  rows.add([l10n.exportTotalIncome, _formatMoney(summary.totalIncome, currency, rate)]);
-  rows.add([l10n.exportTotalExpense, _formatMoney(summary.totalExpense, currency, rate)]);
-  rows.add([l10n.exportBalance, _formatMoney(summary.balance, currency, rate)]);
+  rows.add([]);
+
+  // General information
+  rows.add([
+    l10n.exportStart,
+    DateFormat('yyyy-MM-dd', locale).format(range.start),
+  ]);
+  rows.add([
+    l10n.exportEnd,
+    DateFormat('yyyy-MM-dd', locale).format(range.end),
+  ]);
   rows.add([l10n.exportTransactionsCount, count.toString()]);
   rows.add([]);
+
+  // Summary totals
+  rows.add([
+    l10n.exportTotalIncome,
+    _formatMoney(summary.totalIncome, currency, rate),
+  ]);
+  rows.add([
+    l10n.exportTotalExpense,
+    _formatMoney(summary.totalExpense, currency, rate),
+  ]);
+  rows.add([l10n.exportBalance, _formatMoney(summary.balance, currency, rate)]);
+  rows.add([]);
+
+  // Monthly breakdown header
   rows.add([
     l10n.exportMonthLabel,
     l10n.exportTotalIncome,
     l10n.exportTotalExpense,
     l10n.exportBalance,
   ]);
-  for (final entry in monthly.entries) {
+
+  // Monthly data
+  final sortedMonths = monthly.entries.toList()
+    ..sort((a, b) => a.key.compareTo(b.key));
+  for (final entry in sortedMonths) {
     final parts = entry.key.split('-');
     final monthDate = DateTime(int.parse(parts[0]), int.parse(parts[1]));
     rows.add([
@@ -1335,6 +1397,7 @@ String _buildDetailsCsv(
   double rate,
 ) {
   final rows = <List<String>>[];
+  // Header row
   rows.add([
     l10n.exportDate,
     l10n.exportTime,
@@ -1347,26 +1410,32 @@ String _buildDetailsCsv(
     l10n.exportNote,
   ]);
 
+  // Sort by date (newest first)
   final sorted = List<TransactionModel>.from(items)
     ..sort((a, b) => b.date.compareTo(a.date));
 
+  // Data rows
   for (final tx in sorted) {
     final dateLabel = DateFormat('yyyy-MM-dd', locale).format(tx.date);
-    final timeLabel = DateFormat('HH:mm', locale).format(tx.date);
+    final timeLabel = DateFormat('HH:mm:ss', locale).format(tx.date);
     final typeLabel = _isIncome(tx.type) ? l10n.income : l10n.expenses;
     final categoryLabel = tx.categoryName?.isNotEmpty == true
         ? tx.categoryName!
         : tx.categoryId;
+    final amountFormatted = _formatMoney(tx.amount, currency, rate);
+    final rateFormatted = rate.toStringAsFixed(4);
+    final noteLabel = tx.note ?? '';
+
     rows.add([
       dateLabel,
       timeLabel,
       typeLabel,
       categoryLabel,
-      _formatMoney(tx.amount, currency, rate),
+      amountFormatted,
       currency,
       tx.originalCurrency ?? '',
-      rate.toStringAsFixed(4),
-      tx.note ?? '',
+      rateFormatted,
+      noteLabel,
     ]);
   }
 
@@ -1378,8 +1447,20 @@ String _toCsv(List<List<String>> rows) {
 }
 
 String _csvEscape(String value) {
-  final needsQuotes = value.contains(',') || value.contains('\n') || value.contains('"');
+  // If value is empty, return as-is
+  if (value.isEmpty) return value;
+
+  // Check if value needs to be quoted
+  final needsQuotes =
+      value.contains(',') ||
+      value.contains('\n') ||
+      value.contains('"') ||
+      value.startsWith(' ') ||
+      value.endsWith(' ');
+
   if (!needsQuotes) return value;
+
+  // Escape double quotes by doubling them
   final escaped = value.replaceAll('"', '""');
   return '"$escaped"';
 }
@@ -1402,23 +1483,3 @@ Future<Directory> _getExportDirectory() async {
   }
   return getApplicationDocumentsDirectory();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
